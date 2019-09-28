@@ -3,33 +3,65 @@
 #include <string.h>
 #include <stdbool.h>
 
-const char *EXIT = "q";
+#include "inputblock.h"
+#include "quashutils.h"
+
+// constants ------------------------------------
+const char *EXIT = "quit";
+const int MAX_INPUT_LENGTH = 512; //arbitrary
+const int MAX_INPUT_BLOCK_LENGTH = 256;
+const int MAX_PIPELINE_LENGTH = 32;
+// ----------
 
 int main(int argc, char **argv) {
-  bool quit = false;
-  char *input = malloc(256);
+  char *input = malloc(MAX_INPUT_LENGTH);
+
+  // freed per iteration
+  char **inputPipeSplit; // array of strings
+  struct InputBlock *first;
   
-  while (!quit) {
-    // prompt
-    printf("\n >");
+  while (true) {
+    printf("[activeDirectory]-->");
     fflush(stdout);
 
     // get & strip input
-    fgets(input, 256, stdin);
-    strtok(input, "\n");  // gets rid of trailing newline from fgets input
+    fgets(input, MAX_INPUT_LENGTH, stdin);
+    strtok(input, "\n");  // gets rid of trailing (first!) newline from fgets input
 
-    // handle command
+    // handle command -- eventually needs to be a branch?
     if (strcmp(EXIT, input) == 0) {
       printf("Goodbye.\n");
-      quit = true;
-    } else {
-      printf("You entered: %s with length %lu", input, strlen(input));
+      break; // haven't allocated anything this iteration, safe to exit
     }
 
-  }
+    // make InputBlocks linked list
+    inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
+    if (inputPipeSplit == NULL) {
+      printf("Error splitting pipes\n");
+      continue;
+    }
 
-  // deallocate resources
+    // persistent pointer to the first element in the list
+    first = malloc(sizeof(struct InputBlock));
+    first->prev = NULL;
+    first->next = NULL;
+
+    createInputBlockLinkedList(first, inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+    
+    // free inputPipeSplit every iteration
+    for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) { free(inputPipeSplit[j]); }
+    free(inputPipeSplit);
+
+    // free InputBlocks every iteration
+    struct InputBlock *eraser = first;
+    while (eraser->next != NULL) {
+      eraser = eraser->next;
+      freeInputBlock(eraser->prev);
+    }
+    free(eraser);
+    
+  }
+  
   free(input);
   return 0;
 }
-   
