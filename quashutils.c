@@ -14,32 +14,34 @@ bool isSpace(char input) {
  *   input -- string to split
  *   delim -- character to split on
  *   maxSections -- largest allowed number of sections to split into
- *   maxStringSize -- longest possible section length
  *
  *   returns -- array of dynamically allocated strings
  */
-char** split(char *input, char *delim, int maxSections, int maxStringSize) {
+char** split(char *input, char *delim, int maxSections) {
   char **res;
   res = malloc(maxSections * sizeof(char*));
-  // initialize to NULL
-  for(int i = 0; i < maxSections; i++) { res[i] = NULL; } 
+  for(int i = 0; i < maxSections; i++) { res[i] = NULL; }
+  
   // feed strtok and get first ptr
-  char *ptr = strtok(input, delim);
+  char *section = strtok(input, delim);
   int i = 0;
-  while (ptr != NULL) {
+  while (section != NULL) {
+    res[i] = malloc(strlen(section));
+    strcpy(res[i], section);
+    i++;
+
     // if we have gotten too many inputs, free and abort, returning NULL
     if (i == maxSections) {
-      printf("Pipeline too long! Aborting...\n");
-      for (int i = 0; i < maxSections; i++) { free(res[i]); }
+      printf("Split input too long! Aborting with input: %s\n", input);
+      for (int j = 0; j < maxSections; j++) { free(res[j]); }
       free(res);
       return NULL;
+    } else {
+      // get next string from strtok
+      section = strtok(NULL, delim);
     }
-    // append to res
-    res[i] = malloc(maxStringSize);
-    strcpy(res[i], ptr);
-    i++;
-    // get next string from strtok
-    ptr = strtok(NULL, delim);
+
+    
   }
   return res;
 }

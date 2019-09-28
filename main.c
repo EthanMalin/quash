@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     }
 
     // make InputBlocks linked list
-    inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+    inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
     if (inputPipeSplit == NULL) {
       printf("Error splitting pipes\n");
       continue;
@@ -46,15 +46,17 @@ int main(int argc, char **argv) {
     first->prev = NULL;
     first->next = NULL;
 
+    createInputBlockLinkedList(first, inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+    
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) { free(inputPipeSplit[j]); }
     free(inputPipeSplit);
-    
+
     // free InputBlocks every iteration
     struct InputBlock *eraser = first;
     while (eraser->next != NULL) {
       eraser = eraser->next;
-      free(eraser->prev); // might need a custom inputBlockFree(InputBlock toDelete) to delete args
+      freeInputBlock(eraser->prev);
     }
     free(eraser);
     
