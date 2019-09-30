@@ -10,11 +10,11 @@ struct InputBlock {
   char *outputFile;
   int argc;
   // C requires that this be the last element in the struct
-  char *args[];
+  char **args;
 };
 
 void printInputBlock(struct InputBlock *ib);
 void freeInputBlock(struct InputBlock *ib);
 void createInputBlockLinkedList(struct InputBlock *first, char **raws, int maxPipelineLength, int maxInputBlockLength);
-
+void freeInputBlockLinkedList(struct InputBlock *first);
 #endif

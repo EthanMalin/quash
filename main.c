@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
   struct InputBlock *first;
   
   while (true) {
+    // replace with actual active directory
     printf("[activeDirectory]-->");
     fflush(stdout);
 
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
       break; // haven't allocated anything this iteration, safe to exit
     }
 
-    // make InputBlocks linked list
+    // make InputBlocks linked list, array of size MAX_PIPELINE_LENGTH, padded with NULL at the end
     inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
     if (inputPipeSplit == NULL) {
       printf("Error splitting pipes\n");
@@ -47,19 +48,20 @@ int main(int argc, char **argv) {
     first->next = NULL;
 
     createInputBlockLinkedList(first, inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+
+    /*
+     * actually run the commands here
+     */
     
     // free inputPipeSplit every iteration
-    for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) { free(inputPipeSplit[j]); }
+    for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
+      if (inputPipeSplit[j] == NULL) { break; }
+      free(inputPipeSplit[j]);
+    }
     free(inputPipeSplit);
 
     // free InputBlocks every iteration
-    struct InputBlock *eraser = first;
-    while (eraser->next != NULL) {
-      eraser = eraser->next;
-      freeInputBlock(eraser->prev);
-    }
-    free(eraser);
-    
+    freeInputBlockLinkedList(first);
   }
   
   free(input);
