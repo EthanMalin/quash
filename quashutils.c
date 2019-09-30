@@ -50,7 +50,7 @@ char** split(char *input, char *delim, int maxSections) {
 /*
 trimEnds -- trims whitespace from start and end of string
   input -- string to trim
-  return -- substring of input 
+  return -- new string without whitespace on the ends
 */
 char* trimEnds(char *input) {
   char *end;
