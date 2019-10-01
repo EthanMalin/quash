@@ -1,7 +1,13 @@
-all: main.o
-	cc -o main main.o
-main.o: main.c
-	cc -c main.c
+CC=gcc
+CFLAGS=-I
+DEPS = inputblock.h quashutils.h
+OBJ = main.o inputblock.o quashutils.o
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+main: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm *.o main
+	rm main *.o *~
