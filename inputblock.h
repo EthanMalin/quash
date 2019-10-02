@@ -15,6 +15,6 @@ struct InputBlock {
 
 void printInputBlock(struct InputBlock *ib);
 void freeInputBlock(struct InputBlock *ib);
-void createInputBlockLinkedList(struct InputBlock **first, char **raws, int maxPipelineLength, int maxInputBlockLength);
+struct InputBlock* createInputBlockLinkedList(char **raws, int maxListLength, int maxInputBlockLength);
 void freeInputBlockLinkedList(struct InputBlock *first);
 #endif

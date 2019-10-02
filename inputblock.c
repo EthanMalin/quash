@@ -71,62 +71,59 @@ int parseInputBlockArgs(int blockLength, char **block, char ***args) {
 
 
 /* CONSTRUCTORS -------------------------------------------------------------------------- */
-void inputBlockFromString(struct InputBlock **ib,char *rawBlock, int maxInputBlockLength) {
+struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength) {
   printf("creating InputBlock from \"%s\"\n", rawBlock);
-
+  struct InputBlock* ib = NULL;
   // parse block
   char *trimmedBlock = trimEnds(rawBlock); // returns substring TODO, MAKE RETURN COPY
   char **block = split(trimmedBlock, " ", maxInputBlockLength / 2); // makes copy of block, splits into fields e.g. ["ls", "-a", "-t", ... ]
-  
   if (block == NULL) { // this would happen if the block was too long/had too many spaces
     printf("ERROR: command string \"%s\" ill formed\n", trimmedBlock);
-    (*ib) = NULL;
+    return NULL;
   }
 
   // create InputBlock
-  (*ib) = malloc(sizeof(struct InputBlock));
-  (*ib)->prev = NULL;
-  (*ib)->next = NULL;      
-  (*ib)->execName = block[0];
+  ib = malloc(sizeof(struct InputBlock));
+  ib->prev = NULL;
+  ib->next = NULL;      
+  ib->execName = block[0];
 
 
   // no support for parsing these out yet
-  (*ib)->inputFile = NULL;
-  (*ib)->outputFile = NULL;    
-
-  (*ib)->argc = parseInputBlockArgs(maxInputBlockLength / 2, block, &((*ib)->args)); // doing a little more work here
+  ib->inputFile = NULL;
+  ib->outputFile = NULL;
+  // this should probably be in a try/catch, and parseInputBlockArgs should throw some kind of error
+  ib->argc = parseInputBlockArgs(maxInputBlockLength / 2, block, &(ib->args)); // doing a little more work here
+  return ib;
 }
 
 
-void createInputBlockLinkedList(struct InputBlock **first, char **rawBlocks, int maxPipelineLength, int maxInputBlockLength) {
+struct InputBlock* createInputBlockLinkedList(char **rawBlocks, int maxListLength, int maxInputBlockLength) {
   // bookkeeping pointers
-  struct InputBlock *reset = *first;
+  struct InputBlock *first = NULL;
   struct InputBlock *prev = NULL;
-  struct InputBlock **current = first;
-  for(int i = 0; i < maxPipelineLength; i++) {
+  struct InputBlock *current = NULL;
+  // would be nice to get rid of maxListLength param, and just alwasy have a NULL at end of rawBlocks
+  for(int i = 0; i < maxListLength; i++) {
     // rawBlocks padded with NULL
     if(rawBlocks[i] == NULL) { break; }
 
-    inputBlockFromString(current, rawBlocks[i], maxInputBlockLength);
-    if (*current == NULL) {
+    current = inputBlockFromString(rawBlocks[i], maxInputBlockLength);
+    if (current == NULL) {
       printf("inputBlockFromString failed on iteration %d\n", i);
-      freeInputBlockLinkedList(*first);
-      *first = NULL;
-      break;
+      freeInputBlockLinkedList(first);
+      return NULL;
     }
+    if (i == 0) { first = current; }
 
     // hook up the new node to the list
-    if (prev != NULL) { prev->next = *current; }
-    (*current)->next = NULL;
-    (*current)->prev = prev;
+    if (prev != NULL) { prev->next = current; }
+    current->next = NULL;
+    current->prev = prev;
 
     // iterate
-    prev = *current;
+    prev = current;
   }
-
-  // reset the pointer to first -- better way to do this?
-  while((*current)->prev != NULL) {
-    *current = (*current)->prev;
-  }
+  return first;
 }
 /* END CONSTRUCTORS ------------------------------------------------------------------------------------ */
