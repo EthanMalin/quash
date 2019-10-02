@@ -17,7 +17,8 @@ void test();
 
 int main(int argc, char **argv) {
   char *input = malloc(MAX_INPUT_LENGTH);
-
+  test();
+  return 0;
   // freed per iteration
   char **inputPipeSplit; // array of strings
   struct InputBlock *first;
@@ -40,11 +41,14 @@ int main(int argc, char **argv) {
     // make InputBlocks linked list, array of size MAX_PIPELINE_LENGTH, padded with NULL at the end
     inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
     if (inputPipeSplit == NULL) {
+
+
+
       printf("Error splitting pipes\n");
       continue;
     }
 
-    createInputBlockLinkedList(&first, inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+    first = createInputBlockLinkedList(inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
     if (first == NULL) {
       printf("ERROR: could not create linked list from strings.\n");
       break;
@@ -91,7 +95,7 @@ void test() {
     printf("creating linked list from: \"%s\"\n", t[i]);
     inputPipeSplit = split(t[i], "|", MAX_PIPELINE_LENGTH);
     
-    createInputBlockLinkedList(&first, inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
+    first = createInputBlockLinkedList(inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
     if (first == NULL) {
       printf("ERROR: could not create linked list from strings.\n");
       break;
