@@ -16,5 +16,39 @@ delete this? we have projects now
 + [] quash should implement the pipe command ('|')
 + [] quash should support reading commands interactively (with a prompt) or reading a set of commands stored in a file using '<' ex. bash> quash < commands.txt
 
+## ABOUT THE IMPLEMENTATION
+So far we only have one piece of the puzzle mostly implemented.
 
+###Input Blocks
+An input block is defined as
+```
+struct InputBlock {
+  struct InputBlock *prev;
+  struct InputBlock *next;
+  char *execName;
+  // WARNING -- if files unused they MUST explicitly be set to NULL
+  char *inputFile; 
+  char *outputFile;
+  int argc;
+  // C requires that this be the last element in the struct
+  char **args;
+};
+```
+The fields concerning the input are the inputFile, outputFile, execName, and args (along with argc).
+It should also be obvious that InputBlocks have the ability to link together through their next and prev pointers. This is helpful when creating pipelines of executables.
+We parse the user input to quash into InputBlocks to have a friendlier data structure to work with, rather than executing off of the raw strings themselves.
+
+Ideal main
+```
+int main(...) {
+    bool quit = false;
+    while(!quit) {
+        char **input;
+	struct InputBlock *first;
+	input = getInput();
+	first = makeInputBlockLinkedList(input);
+	quit = quash(first);
+    }
+}
+```
 
