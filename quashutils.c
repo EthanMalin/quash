@@ -19,8 +19,8 @@ bool isSpace(char input) {
  */
 char** split(char *input, char *delim, int maxSections) {
   char **res;
-  res = malloc(maxSections * sizeof(char*));
-  for(int i = 0; i < maxSections; i++) { res[i] = NULL; }
+  res = malloc(maxSections * sizeof(char*) + 1); // +1 so there is always a NULL at the end
+  for(int i = 0; i < maxSections+1; i++) { res[i] = NULL; }
   
   // feed strtok and get first ptr
   char *section = strtok(input, delim);
