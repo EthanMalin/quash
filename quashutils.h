@@ -7,6 +7,7 @@
 char** split(char *input, char *delim, int maxSections);
 /* returns substring of input, not to be freed */
 char* trimEnds(char *input);
+char* trimEndsCopy(const char *input);
 bool isSpace(char input);
 
 #endif

@@ -15,7 +15,7 @@ bool isSpace(char input) {
  *   delim -- character to split on
  *   maxSections -- largest allowed number of sections to split into
  *
- *   returns -- array of dynamically allocated strings
+ *   returns -- array of dynamically allocated strings, padded with NULL
  */
 char** split(char *input, char *delim, int maxSections) {
   char **res;
@@ -50,7 +50,7 @@ char** split(char *input, char *delim, int maxSections) {
 /*
 trimEnds -- trims whitespace from start and end of string
   input -- string to trim
-  return -- new string without whitespace on the ends
+  return -- subsstring without whitespace on the ends
 */
 char* trimEnds(char *input) {
   char *end;
@@ -65,4 +65,22 @@ char* trimEnds(char *input) {
   end[1] = '\0';
   return input;
 }
- 
+
+char* trimEndsCopy(const char *input) {
+  char *res;
+  const char *end = input + strlen(input) - 1;
+  const char *beg = input;
+  // seek beg to first non-space
+  while (isSpace(*beg)) { beg++; }
+  if (*beg == '\0') { return NULL; }
+
+  // seek end to last non-space
+  while (end >= beg && isSpace(*end)) { end--; }
+  res = malloc(end - beg + 2);
+  int i = 0;
+  for (; i < end - beg + 1; i++) {
+    res[i] = beg[i];
+  }
+  res[i] = '\0';
+  return res;
+}
