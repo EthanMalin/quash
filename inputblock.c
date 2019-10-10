@@ -1,5 +1,6 @@
 #include <stdio.h> //printf
 #include <stdlib.h> // NULL constant
+#include <string.h> //strcpy
 
 #include "quashutils.h" //trimEnds, split
 #include "inputblock.h"
@@ -11,10 +12,12 @@
  */
 void printInputBlock(struct InputBlock *ib) {
   printf("Name: %s\n", ib->execName);
-  printf("Args:\n");
+  printf("Args: [");
   for (int i = 0; i < ib->argc; i++) {
-    printf("\t%s\n", ib->args[i]);
+    printf("%s", ib->args[i]);
+    if (i != ib->argc - 1) { printf(","); }
   }
+  printf("]\n");
   if (ib->inputFile != NULL) {
     printf("Input Redirect: %s\n", ib->inputFile);
   }
@@ -48,52 +51,93 @@ void freeInputBlockLinkedList(struct InputBlock *first) {
 }
 /* END DESTRUCTORS ---------------------------------------------------- */
 
+char* parseInputBlockInputFile(char **block) {
+  int i = 0;
+  while (block[i] != NULL) {
+    if (strcmp(block[i], ">")==0) {
+      if (block[i+1] == NULL) {
+        return NULL;
+      } else {
+        return trimEndsCopy(block[i+1]);
+      }
+    }
+    i++;
+  }
+  return NULL;
+}
 
-/* parseInputBlockArgs
- * populates args with arguments, returns argc
+char* parseInputBlockOutputFile(char **block) {
+  int i = 0;
+  while (block[i] != NULL) {
+    if (strcmp(block[i], "<")==0) {
+      if (block[i+1] == NULL) {
+        return NULL;
+      } else {
+        return trimEndsCopy(block[i+1]);
+      }
+    }
+    i++;
+  }
+  return NULL;
+}
+/* countInputBlockArgs
  */
-int parseInputBlockArgs(int blockLength, char **block, char ***args) {
+int countInputBlockArgs(char **block) {
   // count the arguments, start at second index (first is executable name)
   int argc = 0;
-  for (;argc < blockLength; argc++) {
-    if (block[argc+1] == NULL) {
-      break;
-    }
+  while (block[argc+1] != NULL) {
+    //if (strcmp("<", trimEnds(block[argc+1])) == 0) { break; }
+    //if (strcmp(">", trimEnds(block[argc+1])) == 0) { break; } // strcmp should work on substrings? if not take copy and free
+    argc++;
   }
-  // populate the arguments
-  *args = malloc(argc * sizeof(char *));
-  for (int i = 0; i < argc; i++) {
-    (*args)[i] = block[i+1];
-  }
-
   return argc;
 }
 
 
 /* CONSTRUCTORS -------------------------------------------------------------------------- */
 struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength) {
-  printf("creating InputBlock from \"%s\"\n", rawBlock);
   struct InputBlock* ib = NULL;
   // parse block
-  char *trimmedBlock = trimEnds(rawBlock); // returns substring TODO, MAKE RETURN COPY
-  char **block = split(trimmedBlock, " ", maxInputBlockLength / 2); // makes copy of block, splits into fields e.g. ["ls", "-a", "-t", ... ]
+  char *trimmedBlock = trimEndsCopy(rawBlock);
+  char **block = split(trimmedBlock, " ", maxInputBlockLength); // makes copy of block, splits into fields e.g. ["ls", "-a", "-t", ... ]
+  free(trimmedBlock);
   if (block == NULL) { // this would happen if the block was too long/had too many spaces
-    printf("ERROR: command string \"%s\" ill formed\n", trimmedBlock);
+    printf("ERROR: command string \"%s\" too long\n", rawBlock);
     return NULL;
   }
 
   // create InputBlock
   ib = malloc(sizeof(struct InputBlock));
   ib->prev = NULL;
-  ib->next = NULL;      
-  ib->execName = block[0];
+  ib->next = NULL;
 
+  // copy execName
+  // should any of the following be in some sort of error handling scheme? probably.
+  ib->execName = malloc(strlen(block[0]));
+  strcpy(ib->execName, block[0]);
 
-  // no support for parsing these out yet
   ib->inputFile = NULL;
   ib->outputFile = NULL;
-  // this should probably be in a try/catch, and parseInputBlockArgs should throw some kind of error
-  ib->argc = parseInputBlockArgs(maxInputBlockLength / 2, block, &(ib->args)); // doing a little more work here
+  //ib->inputFile = parseInputBlockInputFile(block);
+  //ib->outputFile = parseInputBlockOutputFile(block);
+  ib->argc = countInputBlockArgs(block);
+  ib->args = malloc(ib->argc * sizeof(char *));
+  for(int i = 0; i < ib->argc; i++) {
+    // deep copy the arguments
+    ib->args[i] = malloc(strlen(block[i+1]));
+    strcpy(ib->args[i], block[i+1]);
+  }
+
+  /* NOTE
+   * ib now owns *copies* of the string data passed in the rawBlock parameter, and copied into the block array in the split call
+   * so we can safely free the block data, and free the rawBlock data in main after this point.
+   */
+  // split pads block with NULL
+  for (int i = 0; i < maxInputBlockLength; i++) {
+    if (block[i] == NULL) { break; }
+    free(block[i]);
+  }
+  free(block);
   return ib;
 }
 
@@ -107,7 +151,6 @@ struct InputBlock* createInputBlockLinkedList(char **rawBlocks, int maxListLengt
   for(int i = 0; i < maxListLength; i++) {
     // rawBlocks padded with NULL
     if(rawBlocks[i] == NULL) { break; }
-
     current = inputBlockFromString(rawBlocks[i], maxInputBlockLength);
     if (current == NULL) {
       printf("inputBlockFromString failed on iteration %d\n", i);
@@ -123,6 +166,7 @@ struct InputBlock* createInputBlockLinkedList(char **rawBlocks, int maxListLengt
 
     // iterate
     prev = current;
+    current = current->next;
   }
   return first;
 }

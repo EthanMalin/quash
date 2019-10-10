@@ -36,14 +36,13 @@ int main(int argc, char **argv) {
     if (strcmp(EXIT, input) == 0) {
       printf("Goodbye.\n");
       break; // haven't allocated anything this iteration, safe to exit
+      // MIGHT NOT BE TRUE, does fgets allocate input?
     }
 
     // make InputBlocks linked list, array of size MAX_PIPELINE_LENGTH, padded with NULL at the end
+    // TODO, require split to end the array with NULL
     inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
     if (inputPipeSplit == NULL) {
-
-
-
       printf("Error splitting pipes\n");
       continue;
     }
@@ -80,6 +79,7 @@ int main(int argc, char **argv) {
 
 // TESTING FUNCTION
 void test() {
+  
   // freed per iteration
   char **inputPipeSplit; // array of strings
   struct InputBlock *first;
@@ -92,6 +92,7 @@ void test() {
 
   // testing split on pipes                                                                                                                                                                         
   for(int i = 0; i < 4; i++) {
+    printf("\n\n#######################################\n");
     printf("creating linked list from: \"%s\"\n", t[i]);
     inputPipeSplit = split(t[i], "|", MAX_PIPELINE_LENGTH);
     
