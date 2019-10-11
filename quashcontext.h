@@ -8,14 +8,18 @@
 struct QuashContext
 {
   char* cwd;
+  char** env;
 };
 
 // Allocates space for and creates the QuashContext struct.
 // Sets initial cwd. Does not deallocate memory.
-struct QuashContext* contextCtor(char**env);
+struct QuashContext* contextCtor(char** _env);
 
 // Deallocates all memory for which the given QuashContext
 // is responsible for, then deallocates it as well.
 void contextDtor(struct QuashContext* qc);
+
+// Updates the current working directory of the context.
+void updateCWD();
 
 #endif
