@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h> //O_WRONLY, O_RDONLY
 
 #include "inputblock.h"
 #include "quashutils.h"
@@ -14,11 +16,12 @@ const int MAX_PIPELINE_LENGTH = 32;
 // ----------
 
 void test();
+void quash(struct InputBlock *first);
 
 int main(int argc, char **argv) {
   char *input = malloc(MAX_INPUT_LENGTH);
-  test();
-  return 0;
+  //  test();
+  //  return 0;
   // freed per iteration
   char **inputPipeSplit; // array of strings
   struct InputBlock *first;
@@ -53,13 +56,15 @@ int main(int argc, char **argv) {
       break;
     }
 
-    while (first != NULL) {
-      printInputBlock(first);
-      first = first->next;
+    printf("made input block list:\n");
+    struct InputBlock *traveler = first;
+    while (traveler != NULL) {
+      printInputBlock(traveler);
+      traveler = traveler->next;
     }
-    /*
-     * actually run the commands here
-     */
+
+    printf("quashing...\n");
+    quash(first);
     
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
@@ -76,8 +81,73 @@ int main(int argc, char **argv) {
   return 0;
 }
 
+void quash(struct InputBlock *first) {
+  struct InputBlock *current = first;
+  pid_t child;
+  int pipeIn[2], pipeOut[2];
+  int i = 0;
 
-// TESTING FUNCTION
+  if (first == NULL) {
+    return;
+  }
+
+  printf("non-null list...\n");
+  // set up for the first guy
+  pipeIn[0] = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
+  pipeIn[1] = -1;
+
+  if (current->next != NULL) {
+    pipe(pipeOut);
+  } else {
+    pipeOut[1] = current->outputFile != NULL ? open(current->outputFile, O_WRONLY) : -1;
+    pipeOut[0] = -1;
+  }
+  printf("first guy setup...\n");
+  while (current != NULL) {
+    printf("executing %s...\n", current->execName);
+    // pipeIn should have been set at the end of the last iteration, or first guy setup above
+    if (current != first) {
+      if (current->next != NULL) {	
+	pipe(pipeOut);
+      } else {
+	pipeOut[1] = current->outputFile != NULL ? open(current->outputFile, O_WRONLY) : -1;
+	pipeOut[0] = -1;
+      }
+    }
+
+    printf("forking...\n");
+    child = fork();
+    
+    // CHILD CODE HERE
+    if (child == 0) {
+      printf("in child...\n");
+      if(pipeIn[0] != -1) { dup2(pipeIn[0], STDIN_FILENO); }
+      if(pipeOut[1] != -1) { dup2(pipeOut[1], STDOUT_FILENO); }
+      if(pipeOut[0] != -1) { close(pipeOut[0]); }
+      if (execv(current->execName, current->args) == -1) {
+	printf("uh-oh");
+	exit(-1);
+      }
+      exit(0); 
+    // END CHILD CODE
+    } else {
+      printf("spawned child: %d\n", child);
+    }
+    // child we just spawned has domain over these two now
+    if (pipeIn[0] != -1) { close(pipeIn[0]); }
+    if (pipeOut[1] != -1) { close(pipeOut[1]); }
+    
+    // pipeIn[1] should just be -1
+    pipeIn[0] = pipeOut[0];
+    pipeOut[0] = -1;
+    current = current->next;
+    
+  }
+  if (pipeOut[1] != -1) { close(pipeOut[1]); }
+  wait(&child); // wait for the last forked child, for now always do this
+}   
+
+      // TESTING FUNCTION
 void test() {
   
   // freed per iteration

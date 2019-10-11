@@ -1,11 +1,9 @@
-#include <stdio.h> //printf
+#include <stdio.h>  // printf
 #include <stdlib.h> // NULL constant
-#include <string.h> //strcpy
+#include <string.h> // strcpy
 
 #include "quashutils.h" //trimEnds, split
 #include "inputblock.h"
-
-// struct InputBlock;
 
 /* printInputBlock
  * for debug purposes
@@ -120,12 +118,14 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
   ib->outputFile = parseInputBlockOutputFile(block);
 
   ib->argc = countInputBlockArgs(block);
-  ib->args = malloc(ib->argc * sizeof(char *));
-  for(int i = 0; i < ib->argc; i++) {
+  ib->args = malloc(ib->argc * sizeof(char *) + 1);
+  int i = 0;
+  for(;i < ib->argc; i++) {
     // deep copy the arguments
     ib->args[i] = malloc(strlen(block[i+1]));
     strcpy(ib->args[i], block[i+1]);
   }
+  ib->args[i] = NULL; // so we can pass this directly to execve
 
   /* NOTE
    * ib now owns *copies* of the string data passed in the rawBlock parameter, and copied into the block array in the split call
