@@ -6,12 +6,12 @@ const char* PWD_FLAG = "OLDPWD"; // This is confirmed for MacOS
 // Given the char** envp from main(),
 // returns a malloced char* containing the current working directory
 // must be free'd!
-char* activeDirectory(char** environ)
+char* activeDirectory(char** env)
 {
   size_t i = 0;
-  while (environ[i] != NULL)
+  while (env[i] != NULL)
   {
-    char** split_ = split(environ[i], "=", 3);
+    char** split_ = split(env[i], "=", 3);
 
     if (strcmp(split_[0],PWD_FLAG) == 0)
     {
@@ -30,4 +30,13 @@ char* activeDirectory(char** environ)
     i++;
   }
   return (NULL);
+}
+
+void printAllEnvVars(char** env)
+{
+  for (char **vars = env; *vars != 0; vars++)
+  {
+    char *thisVar = *vars;
+    printf("%s\n", thisVar);    
+  }
 }

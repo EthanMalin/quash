@@ -8,8 +8,10 @@
 #include "quashutils.h"
 
 // given envp from main() returns malloced string of current working directory
-char* activeDirectory(char** environ);
+char* activeDirectory(char** env);
 
+// Prints all elements inside env to stdout.
+void printAllEnvVars(char** env);
 
 
 #endif
