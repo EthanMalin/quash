@@ -19,22 +19,26 @@ bool isSpace(char input) {
  */
 char** split(char *input, char *delim, int maxSections) {
   char **res;
+  char *temp = malloc(strlen(input));
+  strlcpy(temp, input, strlen(input) + 1);
+
   res = malloc(maxSections * sizeof(char*) + 1); // +1 so there is always a NULL at the end
   for(int i = 0; i < maxSections+1; i++) { res[i] = NULL; }
-  
   // feed strtok and get first ptr
-  char *section = strtok(input, delim);
+  char *section = strtok(temp, delim);
   int i = 0;
+
   while (section != NULL) {
     res[i] = malloc(strlen(section));
     strcpy(res[i], section);
     i++;
 
-    // if we have gotten too many inputs, free and abort, returning NULL
+    // if we have gotten too many temps, free and abort, returning NULL
     if (i == maxSections) {
-      printf("Split input too long! Aborting with input: %s\n", input);
+      printf("Split temp too long! Aborting with temp: %s\n", temp);
       for (int j = 0; j < maxSections; j++) { free(res[j]); }
       free(res);
+      free(temp);
       return NULL;
     } else {
       // get next string from strtok
@@ -43,6 +47,7 @@ char** split(char *input, char *delim, int maxSections) {
 
     
   }
+  free(temp);
   return res;
 }
 
