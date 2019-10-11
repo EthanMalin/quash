@@ -11,16 +11,11 @@ struct QuashContext* contextCtor(char** _env)
 void contextDtor(struct QuashContext* qc)
 {
   free(qc->cwd);
-  for (char **vars = qc->env; *vars != 0; vars++)
-  {
-    free(*vars);
-  }
-  free(qc->env);
   free(qc);
 }
 
 void updateCWD(struct QuashContext* qc)
 {
   free(qc->cwd);
-  cwd = activeDirectory(qc)
+  qc->cwd = activeDirectory(qc->env);
 }
