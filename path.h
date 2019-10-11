@@ -8,7 +8,7 @@
 #include "quashutils.h"
 
 // given envp from main() returns malloced string of current working directory
-char* initial_cwd(char** environ);
+char* activeDirectory(char** environ);
 
 
 

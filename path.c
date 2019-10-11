@@ -6,7 +6,7 @@ const char* PWD_FLAG = "OLDPWD"; // This is confirmed for MacOS
 // Given the char** envp from main(),
 // returns a malloced char* containing the current working directory
 // must be free'd!
-char* initial_cwd(char** environ)
+char* activeDirectory(char** environ)
 {
   size_t i = 0;
   while (environ[i] != NULL)
