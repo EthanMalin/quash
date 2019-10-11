@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
 
     printf("quashing...\n");
     quash(first);
+    printf("done quashing...\n");
     
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
@@ -134,8 +135,13 @@ void quash(struct InputBlock *first) {
       printf("spawned child: %d\n", child);
     }
     // child we just spawned has domain over these two now
-    if (pipeIn[0] != -1) { close(pipeIn[0]); }
-    if (pipeOut[1] != -1) { close(pipeOut[1]); }
+    if (pipeIn[0] != -1) {
+      printf("closing pipeIn[0]\n");
+      close(pipeIn[0]);
+    }
+    if (pipeOut[1] != -1) {
+      printf("closing pipeOut[1]\n");
+      close(pipeOut[1]); }
     
     // pipeIn[1] should just be -1
     pipeIn[0] = pipeOut[0];
