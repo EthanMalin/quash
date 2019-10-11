@@ -1,6 +1,6 @@
 #include "path.h"
 
-const char* PWD_FLAG = "OLDPWD"; // This is confirmed for MacOS
+const char* PWD_FLAG = "PWD"; // This is confirmed for MacOS
 
 
 // Given the char** envp from main(),
@@ -12,11 +12,10 @@ char* activeDirectory(char** env)
   while (env[i] != NULL)
   {
     char** split_ = split(env[i], "=", 3);
-
     if (strcmp(split_[0],PWD_FLAG) == 0)
     {
       char* split_1 = malloc(strlen(split_[1]));
-      strlcpy(split_1, split_[1], strlen(split_[1]));
+      strlcpy(split_1, split_[1], strlen(split_[1]) + 1);
 
       size_t j = 0;
       while(split_[j] != NULL)
@@ -25,6 +24,7 @@ char* activeDirectory(char** env)
         j++;
       }
       free(split_);
+      printf("Returning %s\n", split_1);
       return(split_1);
     }
     i++;
