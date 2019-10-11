@@ -6,3 +6,9 @@ struct QuashContext* contextCtor(char**env)
     returnContextPtr->cwd = activeDirectory(env);
     return returnContextPtr;
 }
+
+void contextDtor(struct QuashContext* qc)
+{
+    free(qc->cwd);
+    free(qc);
+}
