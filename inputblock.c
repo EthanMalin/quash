@@ -83,9 +83,9 @@ char* parseInputBlockOutputFile(char **block) {
 int countInputBlockArgs(char **block) {
   // count the arguments, start at second index (first is executable name)
   int argc = 0;
-  while (block[argc+1] != NULL) {
-    if (strcmp("<", block[argc+1]) == 0) { break; }
-    if (strcmp(">", block[argc+1]) == 0) { break; } // assuming that these will always be good... no extra spaces or anything
+  while (block[argc] != NULL) {
+    if (strcmp("<", block[argc]) == 0) { break; }
+    if (strcmp(">", block[argc]) == 0) { break; } // assuming that these will always be good... no extra spaces or anything
     argc++;
   }
   return argc;
@@ -122,8 +122,8 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
   int i = 0;
   for(;i < ib->argc; i++) {
     // deep copy the arguments
-    ib->args[i] = malloc(strlen(block[i+1]));
-    strcpy(ib->args[i], block[i+1]);
+    ib->args[i] = malloc(strlen(block[i]));
+    strcpy(ib->args[i], block[i]);
   }
   ib->args[i] = NULL; // so we can pass this directly to execve
 
