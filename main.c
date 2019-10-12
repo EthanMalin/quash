@@ -17,6 +17,7 @@ const int MAX_PIPELINE_LENGTH = 32;
 
 void test();
 void quash(struct InputBlock *first);
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
 
 int main(int argc, char **argv) {
   char *input = malloc(MAX_INPUT_LENGTH);
@@ -85,73 +86,56 @@ int main(int argc, char **argv) {
 void quash(struct InputBlock *first) {
   struct InputBlock *current = first;
   pid_t child;
-  int pipeIn[2], pipeOut[2];
-  int i = 0;
+  int out[2], in; // note in NOT an array
+  if (first == NULL) { return; }
 
-  if (first == NULL) {
-    return;
+  // set up input for first ib
+  in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
+
+  // main execution loop
+  while (current != NULL) {    
+    in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
+    current = current->next; // iterate
   }
-
-  printf("non-null list...\n");
-  // set up for the first guy
-  pipeIn[0] = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
-  pipeIn[1] = -1;
-
-  if (current->next != NULL) {
-    pipe(pipeOut);
-  } else {
-    pipeOut[1] = current->outputFile != NULL ? open(current->outputFile, O_WRONLY) : -1;
-    pipeOut[0] = -1;
-  }
-  printf("first guy setup...\n");
-  while (current != NULL) {
-    printf("executing %s...\n", current->execName);
-    // pipeIn should have been set at the end of the last iteration, or first guy setup above
-    if (current != first) {
-      if (current->next != NULL) {	
-	pipe(pipeOut);
-      } else {
-	pipeOut[1] = current->outputFile != NULL ? open(current->outputFile, O_WRONLY) : -1;
-	pipeOut[0] = -1;
-      }
-    }
-
-    printf("forking...\n");
-    child = fork();
-    
-    // CHILD CODE HERE
-    if (child == 0) {
-      printf("in child...\n");
-      if(pipeIn[0] != -1) { dup2(pipeIn[0], STDIN_FILENO); }
-      if(pipeOut[1] != -1) { dup2(pipeOut[1], STDOUT_FILENO); }
-      if(pipeOut[0] != -1) { close(pipeOut[0]); }
-      if (execv(current->execName, current->args) == -1) {
-	printf("uh-oh");
-	exit(-1);
-      }
-      exit(0); 
-    // END CHILD CODE
-    } else {
-      printf("spawned child: %d\n", child);
-    }
-    // child we just spawned has domain over these two now
-    if (pipeIn[0] != -1) {
-      printf("closing pipeIn[0]\n");
-      close(pipeIn[0]);
-    }
-    if (pipeOut[1] != -1) {
-      printf("closing pipeOut[1]\n");
-      close(pipeOut[1]); }
-    
-    // pipeIn[1] should just be -1
-    pipeIn[0] = pipeOut[0];
-    pipeOut[0] = -1;
-    current = current->next;
-    
-  }
-  if (pipeOut[1] != -1) { close(pipeOut[1]); }
   wait(&child); // wait for the last forked child, for now always do this
-}   
+}
+
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
+  // assume input is set up, set up output
+  if (toRun->next != NULL) { // if there is to be a "next process" that takes precedence over output redirect
+    pipe(out);
+  } else if (toRun->outputFile != NULL) {
+    out[1] = open(toRun->outputFile, O_WRONLY); // should test for file existence
+    out[0] = -1;
+  } else {
+    out[1] = -1;
+    out[0] = -1;
+  }
+  
+  printf("forking...\n");   
+  *child = fork();
+  
+  if (*child == 0) {
+    // CHILD CODE HERE ----------------------------------------------------------------------
+    printf("in child...\n");
+    if (in != -1) { dup2(in, STDIN_FILENO); }
+    if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
+    if (out[0] != -1) { close(out[0]); } // don't need to read from output
+
+    if (execv(toRun->execName, toRun->args) == -1) {
+      printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
+      exit(-1);
+    }
+    // END CHILD CODE -----------------------------------------------------------------------
+  } else if (*child < 0) {
+    printf("error on fork: %d\n", *child);
+    return -1;
+  }
+
+  if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
+  if (in != -1) { close(in); }
+  return out[0]; // return potential next process input (only non-negative if we piped in this function)
+}  
 
       // TESTING FUNCTION
 void test() {
