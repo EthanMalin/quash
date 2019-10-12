@@ -57,12 +57,13 @@ int main(int argc, char **argv) {
       break;
     }
 
-    printf("made input block list:\n");
+    /* prints created InputBlock list
     struct InputBlock *traveler = first;
     while (traveler != NULL) {
       printInputBlock(traveler);
       traveler = traveler->next;
     }
+    */
 
     printf("quashing...\n");
     quash(first);
@@ -112,12 +113,9 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
     out[0] = -1;
   }
   
-  printf("forking...\n");   
-  *child = fork();
-  
+  *child = fork();  
   if (*child == 0) {
     // CHILD CODE HERE ----------------------------------------------------------------------
-    printf("in child...\n");
     if (in != -1) { dup2(in, STDIN_FILENO); }
     if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
     if (out[0] != -1) { close(out[0]); } // don't need to read from output
