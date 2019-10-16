@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     printf("[activeDirectory]-->");
     fflush(stdout);
 
-    // get & strip input
+    // get & strip input, definitely need more error handling here
     fgets(input, MAX_INPUT_LENGTH, stdin);
     strtok(input, "\n");  // gets rid of trailing (first!) newline from fgets input
 
@@ -57,17 +57,8 @@ int main(int argc, char **argv) {
       break;
     }
 
-    /* prints created InputBlock list
-    struct InputBlock *traveler = first;
-    while (traveler != NULL) {
-      printInputBlock(traveler);
-      traveler = traveler->next;
-    }
-    */
-
-    printf("quashing...\n");
+    // important
     quash(first);
-    printf("done quashing...\n");
     
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
@@ -87,14 +78,13 @@ int main(int argc, char **argv) {
 void quash(struct InputBlock *first) {
   struct InputBlock *current = first;
   pid_t child;
-  int out[2], in; // note in NOT an array
-  if (first == NULL) { return; }
+  int out[2], in; // note 'in' NOT an array
 
   // set up input for first ib
   in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
 
   // main execution loop
-  while (current != NULL) {    
+  while (current != NULL) {
     in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
     current = current->next; // iterate
   }
@@ -103,7 +93,7 @@ void quash(struct InputBlock *first) {
 
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
   // assume input is set up, set up output
-  if (toRun->next != NULL) { // if there is to be a "next process" that takes precedence over output redirect
+  if (toRun->next != NULL) { // if there is to be a "next process", it takes precedence over output redirect
     pipe(out);
   } else if (toRun->outputFile != NULL) {
     out[1] = open(toRun->outputFile, O_WRONLY); // should test for file existence
@@ -112,7 +102,8 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
     out[1] = -1;
     out[0] = -1;
   }
-  
+
+  // create child and execute new process
   *child = fork();  
   if (*child == 0) {
     // CHILD CODE HERE ----------------------------------------------------------------------
@@ -132,7 +123,7 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
 
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
-  return out[0]; // return potential next process input (only non-negative if we piped in this function)
+  return out[0]; // return potential next process input (only non-negative if we called pipe in this function)
 }  
 
       // TESTING FUNCTION
