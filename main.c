@@ -9,7 +9,8 @@
 #include "quashutils.h"
 
 // constants ------------------------------------
-const char *EXIT = "quit";
+const char *EXIT = "exit";
+const char *QUIT = "quiv";
 const int MAX_INPUT_LENGTH = 512; //arbitrary
 const int MAX_INPUT_BLOCK_LENGTH = 256;
 const int MAX_PIPELINE_LENGTH = 32;
@@ -37,7 +38,7 @@ int main(int argc, char **argv) {
     strtok(input, "\n");  // gets rid of trailing (first!) newline from fgets input
 
     // handle command -- eventually needs to be a branch?
-    if (strcmp(EXIT, input) == 0) {
+    if (strcmp(EXIT, input) == 0 || strcmp(QUIT, input) == 0) {
       printf("Goodbye.\n");
       break; // haven't allocated anything this iteration, safe to exit
       // MIGHT NOT BE TRUE, does fgets allocate input?
