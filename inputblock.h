@@ -4,6 +4,8 @@
 struct InputBlock {
   struct InputBlock *prev;
   struct InputBlock *next;
+
+  char *command;
   char *execName;
   // WARNING -- if files unused they MUST explicitly be set to NULL
   char *inputFile; 

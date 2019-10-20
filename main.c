@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h> //O_WRONLY, O_RDONLY
 #include <sys/wait.h>
+#include <errno.h>
 
 #include "inputblock.h"
 #include "quashutils.h"
@@ -18,8 +19,11 @@ const int MAX_INPUT_BLOCK_LENGTH = 256;
 const int MAX_PIPELINE_LENGTH = 32;
 // ----------
 
+int QUASH_GLOBAL_ID_POOL = 1;
 struct job {
   pid_t id;
+  int qid;
+  char *command;
   struct job *next;
 };
 
@@ -43,7 +47,7 @@ int main(int argc, char **argv, char **envp) {
     do {
       exited = waitpid(0, &status, WNOHANG);
       if (exited != 0 && exited != -1) {
-	      printf("[%d] completed\n", exited);
+	printf("[%d] completed\n", exited);
       }
     } while (exited != -1 && exited != 0);
     
@@ -65,12 +69,12 @@ int main(int argc, char **argv, char **envp) {
     // look for and remove '&'
     for (int i = 0; i < MAX_INPUT_LENGTH; i++) {
       if (input[i] == '&') {
-	      input[i] = '\0';
-	      bg = 1;
+	input[i] = '\0';
+	bg = 1;
         printf("bg = true\n");
         break;
       } else {
-	      bg = 0;
+	bg = 0;
       }
     }
 
@@ -129,14 +133,16 @@ void quash(struct InputBlock *first, bool background, struct QuashContext *qc) {
 	deleteEnd(qc->cwd);
 	size_t i = 0;
       } else {
+	char *old = qc->cwd;
 	qc->cwd = concat(qc->cwd, first->args[1]);
+	free(old);
       }
     }
   } else {
     // set up input for first ib
     in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
 
-    // main execution loop
+    // main executon loop
     while (current != NULL) {
       in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
       current = current->next; // iterate
@@ -155,7 +161,19 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
   if (toRun->next != NULL) { // if there is to be a "next process", it takes precedence over output redirect
     pipe(out);
   } else if (toRun->outputFile != NULL) {
-    out[1] = open(toRun->outputFile, O_WRONLY); // should test for file existence
+    char *outFile = malloc(strlen(toRun->outputFile) + strlen(qc->cwd) + 2);
+    strcpy(outFile, qc->cwd);
+    strcat(outFile, "/");
+    strcat(outFile, toRun->outputFile);
+    outFile[strlen(toRun->outputFile) + strlen(qc->cwd) + 1] = '\0';
+    out[1] = open(outFile, O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR); // should test for file existence
+    if (out[1] < 0) {
+      if (errno == EEXIST) {
+	out[1] = open(outFile, O_WRONLY);
+      } else {
+	printf("could not open file %s\n", outFile);
+      }
+    }
     out[0] = -1;
   } else {
     out[1] = -1;
