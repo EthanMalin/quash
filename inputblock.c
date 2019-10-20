@@ -73,7 +73,7 @@ char* parseInputBlockOutputFile(char **block) {
       } else {
         return trimEndsCopy(block[i+1]);
       }
-    }
+    }      
     i++;
   }
   return NULL;

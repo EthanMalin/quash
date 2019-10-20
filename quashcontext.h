@@ -2,6 +2,7 @@
 #define QUASH_CONTEXT_H
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "path.h"
 
@@ -9,6 +10,7 @@ struct QuashContext
 {
   char* cwd;
   char** env;
+  char** paths;
 };
 
 // Allocates space for and creates the QuashContext struct.
@@ -19,7 +21,19 @@ struct QuashContext* contextCtor(char** _env);
 // is responsible for, then deallocates it as well.
 void contextDtor(struct QuashContext* qc);
 
-// Updates the current working directory of the context.
+// Prints all elements inside env to stdout.
+void printAllEnvVars(struct QuashContext* qc);
+
+void printAllPaths(struct QuashContext* qc);
+
+// Updates the current working directory of the context
+// with the current PWD from envp
 void updateCWD(struct QuashContext* qc);
 
+// Updates the current working directory of the context
+// to the path passed in.
+void updateCWD_(struct QuashContext* qc, char* newPath);
+
+// Checks whether file exists
+char* getFilePath(struct QuashContext* qc, char* fileName);
 #endif

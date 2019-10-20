@@ -19,8 +19,9 @@ bool isSpace(char input) {
  */
 char** split(char *input, char *delim, int maxSections) {
   char **res;
-  char *temp = malloc(strlen(input));
-  strlcpy(temp, input, strlen(input) + 1);
+  char *temp = malloc(strlen(input) + 1);
+  strncpy(temp, input, strlen(input));
+  temp[strlen(input)] = '\0';
 
   res = malloc(maxSections * sizeof(char*) + 1); // +1 so there is always a NULL at the end
   for(int i = 0; i < maxSections+1; i++) { res[i] = NULL; }
@@ -88,4 +89,24 @@ char* trimEndsCopy(const char *input) {
   }
   res[i] = '\0';
   return res;
+}
+
+char* concat(char* str1, char* str2) {
+      char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
+      strcpy(str3, str1);
+      strcat(str3, str2);
+      return str3;
+}
+
+void deleteEnd (char* myStr) {
+  char *del = &myStr[strlen(myStr)];
+  del--;
+  del--;
+  while (del > myStr && *del != '/')
+      del--;
+
+  if (*del== '/')
+      *del= '\0';
+
+  return;
 }
