@@ -43,11 +43,3 @@ char* activeDirectory(char** env)
   return (NULL);
 }
 
-void printAllEnvVars(char** env)
-{
-  for (char **vars = env; *vars != 0; vars++)
-  {
-    char *thisVar = *vars;
-    printf("%s\n", thisVar);    
-  }
-}
