@@ -1,13 +1,12 @@
 CC=gcc
-CFLAGS=-I
 DEPS = inputblock.h quashutils.h path.h quashcontext.h
 OBJ = main.o inputblock.o quashutils.o path.o quashcontext.o
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $<
 
 main: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^
 
 clean:
 	rm main *.o *~
