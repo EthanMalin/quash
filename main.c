@@ -126,7 +126,7 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
     if (in != -1) { dup2(in, STDIN_FILENO); }
     if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
     if (out[0] != -1) { close(out[0]); } // don't need to read from output
-
+    printInputBlock(toRun);
     if (execv(toRun->execName, toRun->args) == -1) {
       printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
       exit(-1);
@@ -139,7 +139,7 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
 
   // Assume successful command execution
   if (strcmp(toRun->execName, "cd") == 0) {
-    updateCWD_(qc, toRun->args[0]);
+    updateCWD_(qc, toRun->args[1]);
   }
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
