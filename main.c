@@ -129,9 +129,16 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
     if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
     if (out[0] != -1) { close(out[0]); } // don't need to read from output
     // printInputBlock(toRun);
-    if (strcmp(toRun->execName, "/usr/bin/cd") == 0) {
+    // printAllPaths(qc);
+    char* path = getFilePath(qc, toRun->execName);
+    if(path == NULL) { //does not exist!!!
+      printf("ERROR: Executable does not exist in any valid paths\n");
+      exit(-1);
+    } 
+    // printf("Path file exists at %s\n", path);
+    if (strcmp(toRun->execName, "cd") == 0) {
       int res = chdir(toRun->args[1]);
-      if(res != 0) {
+      if(1 < 0) {
         printf("Error on cd.\n");
         exit(-1);
       }
@@ -142,17 +149,17 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
         qc->cwd = concat(qc->cwd, slash);
         if (strcmp(toRun->args[1], "..") == 0) {
           // char** cwdSplit = split(qc->cwd, "/", 10);
-          printf("before delete: %s\n", qc->cwd);
+          // printf("before delete: %s\n", qc->cwd);
           deleteEnd(qc->cwd);
           size_t i = 0;
-          printf("after delete: %s\n", qc->cwd);
+          // printf("after delete: %s\n", qc->cwd);
         }
         else {
           qc->cwd = concat(qc->cwd, toRun->args[1]);
         }
       }
     }
-    else if (execv(toRun->execName, toRun->args) == -1) {
+    else if (execv(path, toRun->args) == -1) {
       printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
       exit(-1);
     }
