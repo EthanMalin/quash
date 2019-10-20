@@ -17,7 +17,7 @@ const int MAX_PIPELINE_LENGTH = 32;
 // ----------
 
 void test();
-void quash(struct InputBlock *first);
+void quash(struct InputBlock *first, bool background);
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
 
 int main(int argc, char **argv) {
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   // freed per iteration
   char **inputPipeSplit; // array of strings
   struct InputBlock *first;
-  
+  bool bg; //background
   while (true) {
     // replace with actual active directory
     printf("[activeDirectory]-->");
@@ -44,8 +44,18 @@ int main(int argc, char **argv) {
       // MIGHT NOT BE TRUE, does fgets allocate input?
     }
 
-    // make InputBlocks linked list, array of size MAX_PIPELINE_LENGTH, padded with NULL at the end
-    // TODO, require split to end the array with NULL
+    // look for and remove '&'
+    for (int i = 0; i < MAX_INPUT_LENGTH; i++) {
+      if (input[i] == '&') {
+	input[i] = '\0';
+	bg = true;
+      } else {
+	bg = false;
+      }
+    }
+
+    // make InputBlocks linked list
+    // make array of size MAX_PIPELINE_LENGTH, padded with NULL at the end
     inputPipeSplit = split(input, "|", MAX_PIPELINE_LENGTH);
     if (inputPipeSplit == NULL) {
       printf("Error splitting pipes\n");
@@ -76,7 +86,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-void quash(struct InputBlock *first) {
+void quash(struct InputBlock *first, bool background) {
   struct InputBlock *current = first;
   pid_t child;
   int out[2], in; // note 'in' NOT an array
@@ -89,8 +99,11 @@ void quash(struct InputBlock *first) {
     in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
     current = current->next; // iterate
   }
-  wait(&child); // wait for the last forked child, for now always do this
+  if (!background) {
+      wait(&child); // wait for the last forked child, for now always do this
+  }
 }
+
 
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
   // assume input is set up, set up output
