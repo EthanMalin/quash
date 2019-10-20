@@ -93,16 +93,40 @@ void quash(struct InputBlock *first, bool background, struct QuashContext *qc) {
   pid_t child;
   int out[2], in; // note 'in' NOT an array
 
-  // set up input for first ib
-  in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
+  // if the user wants to cd..
+  if (strcmp(first->execName, "cd") == 0) {
+    int res = chdir(first->args[1]);
+    if(res < 0) {
+      printf("Error on cd.\n");
+      exit(-1);
+    } else {
+      char* slash = malloc(2);
+      slash[0] = '/';
+      slash[1] = '\0';
+	
+      char *old = qc->cwd;
+      qc->cwd = concat(qc->cwd, slash);
+      free(old);
 
-  // main execution loop
-  while (current != NULL) {
-    in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
-    current = current->next; // iterate
-  }
-  if (!background) {
+      if (strcmp(first->args[1], "..") == 0) {
+	deleteEnd(qc->cwd);
+	size_t i = 0;
+      } else {
+	qc->cwd = concat(qc->cwd, first->args[1]);
+      }
+    }
+  } else {
+    // set up input for first ib
+    in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
+
+    // main execution loop
+    while (current != NULL) {
+      in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
+      current = current->next; // iterate
+    }
+    if (!background) {
       wait(&child); // wait for the last forked child, for now always do this
+    }
   }
 }
 
@@ -131,33 +155,12 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
     // get full path for executable
     char* path = getFilePath(qc, toRun->execName);
     if(path == NULL) { //does not exist!!!
-      printf("ERROR: Executable does not exist in any valid paths\n");
+      printf("ERROR: Executable \"%s\" does not exist in any valid paths\n", toRun->execName);
       exit(-1);
     }
 
-    // if the user wants to cd..
-    if (strcmp(toRun->execName, "cd") == 0) {
-      int res = chdir(toRun->args[1]);
-      if(res < 0) {
-        printf("Error on cd.\n");
-        exit(-1);
-      } else {
-        char* slash = malloc(2);
-	slash[0] = '/';
-	slash[1] = '\0';
-	
-	char *old = qc->cwd;
-        qc->cwd = concat(qc->cwd, slash);
-	free(old);
-
-        if (strcmp(toRun->args[1], "..") == 0) {
-          deleteEnd(qc->cwd);
-          size_t i = 0;
-        } else {
-          qc->cwd = concat(qc->cwd, toRun->args[1]);
-        }
-      }
-    } else if (execv(path, toRun->args) == -1) {
+    // execute!
+    if (execv(path, toRun->args) == -1) {
       printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
       exit(-1);
     }
