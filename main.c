@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     }
 
     // important
-    quash(first);
+    quash(first, bg);
     
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
