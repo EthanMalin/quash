@@ -136,16 +136,17 @@ void quash(struct InputBlock *first, bool background, struct QuashContext *qc) {
     // set up input for first ib
     in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
 
-  // main execution loop
-  while (current != NULL) {
-    in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
-    current = current->next; // iterate
-  }
+    // main execution loop
+    while (current != NULL) {
+      in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
+      current = current->next; // iterate
+    }
 
-  // handle background or not
-  if (background == 0) {
-    int status = 0;
-    waitpid(child, &status, 0);
+    // handle background or not
+    if (background == 0) {
+      int status = 0;
+      waitpid(child, &status, 0);
+    }
   }
 }
 
