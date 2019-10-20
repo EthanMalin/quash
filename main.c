@@ -18,8 +18,8 @@ const int MAX_PIPELINE_LENGTH = 32;
 // ----------
 
 void test();
-void quash(struct InputBlock *first, bool background);
-int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
+void quash(struct InputBlock *first, bool background, struct QuashContext *qc);
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc); // helper function for quash
 
 int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
@@ -71,7 +71,7 @@ int main(int argc, char **argv, char **envp) {
     }
 
     // important
-    quash(first, bg);
+    quash(first, bg, qc);
     
     // free inputPipeSplit every iteration
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
@@ -88,7 +88,7 @@ int main(int argc, char **argv, char **envp) {
   return 0;
 }
 
-void quash(struct InputBlock *first, bool background) {
+void quash(struct InputBlock *first, bool background, struct QuashContext *qc) {
   struct InputBlock *current = first;
   pid_t child;
   int out[2], in; // note 'in' NOT an array
@@ -98,7 +98,7 @@ void quash(struct InputBlock *first, bool background) {
 
   // main execution loop
   while (current != NULL) {
-    in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
+    in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
     current = current->next; // iterate
   }
   if (!background) {
@@ -107,7 +107,7 @@ void quash(struct InputBlock *first, bool background) {
 }
 
 
-int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc) {
   // assume input is set up, set up output
   if (toRun->next != NULL) { // if there is to be a "next process", it takes precedence over output redirect
     pipe(out);
@@ -137,6 +137,10 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
     return -1;
   }
 
+  // Assume successful command execution
+  if (strcmp(toRun->execName, "cd") == 0) {
+    updateCWD_(qc, toRun->args[0]);
+  }
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
   return out[0]; // return potential next process input (only non-negative if we called pipe in this function)
