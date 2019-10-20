@@ -11,6 +11,7 @@ struct QuashContext
   char* cwd;
   char** env;
   char** paths;
+  char* home;
 };
 
 // Allocates space for and creates the QuashContext struct.
@@ -36,4 +37,11 @@ void updateCWD_(struct QuashContext* qc, char* newPath);
 
 // Checks whether file exists
 char* getFilePath(struct QuashContext* qc, char* fileName);
+
+// Change environment variable var to have the value newVarValue
+// Currently supports HOME & PATH
+bool set(struct QuashContext* qc, char* var, char* newVarValue);
+
+
+char* getInitialHome();
 #endif

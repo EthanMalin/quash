@@ -5,6 +5,7 @@ struct QuashContext* contextCtor(char** _env)
   struct QuashContext* returnContextPtr = malloc(sizeof(struct QuashContext));
   returnContextPtr->env = _env;
   returnContextPtr->cwd = activeDirectory(_env);
+  returnContextPtr->home = getInitialHome(_env);
   size_t i = 0;
   while (returnContextPtr->env[i] != NULL)
   {
@@ -122,4 +123,68 @@ char* getFilePath(struct QuashContext* qc, char* fileName)
     free(pathAndFile);
   }
   return(NULL);
+}
+
+bool set(struct QuashContext* qc, char* var, char* newVarValue)
+{
+  printf("var: %s, newVarValue: %s\n", var, newVarValue);
+  for (char **vars = qc->env; *vars != 0; vars++)
+  {
+    char *thisVar = *vars;
+    char** dir = split(thisVar, "=", 3);
+
+    if(strcmp(dir[0], var) == 0 && strcmp(var, "HOME") == 0)
+    {
+      free(qc->home);
+      qc->home = malloc(strlen(newVarValue) + 1);
+      strcpy(qc->home, newVarValue);
+      return(true);
+    }
+    else if (strcmp(thisVar, var) == 0 && strcmp(var, "PATH") == 0)
+    {
+      // printf("Confirmed paths\n");
+      // free(qc->paths);
+      // qc->paths = malloc(strlen(newVarValue) + 1);
+      *qc->paths[0] = *newVarValue;
+      // strcpy(qc->paths[0], newVarValue);
+      return(true);
+    }
+  }
+  return(false);
+}
+
+char* getInitialHome(char** env)
+{
+  size_t i = 0;
+  while (env[i] != NULL)
+  {
+    char** dir = split(env[i], "=", 3);
+    if (strcmp(dir[0], "HOME") == 0)
+    {
+      char* ad = malloc(strlen(dir[1]) + 1);
+      strncpy(ad, dir[1], strlen(dir[1]));
+      ad[strlen(dir[1])] = '\0';
+
+      size_t j = 0;
+      while(dir[j] != NULL)
+      {
+        free(dir[j]);
+        j++;
+      }
+      free(dir);
+      // printf("Returning %s\n", ad);
+      return ad;
+    }
+    
+    size_t j = 0;
+    while(dir[j] != NULL)
+    {
+      free(dir[j]);
+      j++;
+    }
+    free(dir);
+
+    i++;
+  }
+  return (NULL);
 }
