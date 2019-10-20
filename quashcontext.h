@@ -2,6 +2,7 @@
 #define QUASH_CONTEXT_H
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "path.h"
 
@@ -32,4 +33,7 @@ void updateCWD(struct QuashContext* qc);
 // Updates the current working directory of the context
 // to the path passed in.
 void updateCWD_(struct QuashContext* qc, char* newPath);
+
+// Checks whether file exists
+char* getFilePath(struct QuashContext* qc, char* fileName);
 #endif

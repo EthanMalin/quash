@@ -47,13 +47,53 @@ void printAllPaths(struct QuashContext* qc)
 void updateCWD(struct QuashContext* qc)
 {
   free(qc->cwd);
-  printf("Attempting to update CWD\n");
+  // printf("Attempting to update CWD\n");
   qc->cwd = activeDirectory(qc->env);
 }
 
 void updateCWD_(struct QuashContext* qc, char* newPath)
 {
   free(qc->cwd);
-  printf("Attempting to update CWD\n");
+  // printf("Attempting to update CWD\n");
   qc->cwd = newPath;
+}
+
+char* getFilePath(struct QuashContext* qc, char* fileName)
+{
+  // printf("Entering getFIlePath!\n");
+  char* fileName_ = malloc(strlen(fileName) + 1);
+  strcpy(fileName_, fileName);
+  for(size_t i= 0; qc->paths[i] != NULL; i++)
+  {
+    // char* slash = (char*)malloc((strlen("/" + 1)*sizeof(char)));
+    // printf("After slash malloc\n");
+    // strcpy(slash, "/");
+    // printf("After strcpy\n");
+    char* path;
+    // printf("path: %s\n", path);
+    size_t len = strlen(qc->paths[i]);
+    path = malloc(strlen(qc->paths[i]) + 2);
+    strcpy(path, qc->paths[i]);
+    path[len] = '/';
+    path[len + 1] = '\0';
+
+    // strncpy(path, qc->paths[i], strlen(qc->paths[i]));
+    // printf("After strncpy, path=%s\n", path);
+    // char* pathAndFile = concat(path, slash);
+    // printf("pathAndFile: %s\n", pathAndFile);
+    char* pathAndFile = concat(path, fileName_);
+    // printf("pathAndFile concat: %s\n\n", pathAndFile);
+    if(access(pathAndFile, F_OK) != -1 )
+    {
+    // file exists
+      // printf("%s appears at %s\n", fileName, pathAndFile);
+      return(pathAndFile);
+    } else
+    {
+      // printf("%s does not appear in %s\n", fileName, pathAndFile);
+    // file doesn't exist
+    }
+    free(pathAndFile);
+  }
+  return(NULL);
 }
