@@ -24,6 +24,8 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
 int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
   struct QuashContext *qc = contextCtor(envp);
+  printAllEnvVars(qc);
+  return(0);
   //  test();
   //  return 0;
   // freed per iteration

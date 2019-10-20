@@ -9,6 +9,7 @@ struct QuashContext
 {
   char* cwd;
   char** env;
+  char** paths;
 };
 
 // Allocates space for and creates the QuashContext struct.
@@ -18,6 +19,9 @@ struct QuashContext* contextCtor(char** _env);
 // Deallocates all memory for which the given QuashContext
 // is responsible for, then deallocates it as well.
 void contextDtor(struct QuashContext* qc);
+
+// Prints all elements inside env to stdout.
+void printAllEnvVars(struct QuashContext* qc);
 
 // Updates the current working directory of the context
 // with the current PWD from envp

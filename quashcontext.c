@@ -14,6 +14,15 @@ void contextDtor(struct QuashContext* qc)
   free(qc);
 }
 
+void printAllEnvVars(struct QuashContext* qc)
+{
+  for (char **vars = qc->env; *vars != 0; vars++)
+  {
+    char *thisVar = *vars;
+    printf("%s\n", thisVar);    
+  }
+}
+
 void updateCWD(struct QuashContext* qc)
 {
   free(qc->cwd);
