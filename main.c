@@ -24,12 +24,10 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
 int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
   struct QuashContext *qc = contextCtor(envp);
-  //  test();
-  //  return 0;
-  // freed per iteration
-  char **inputPipeSplit; // array of strings
+  char **inputPipeSplit;
   struct InputBlock *first;
   bool bg; //background
+
   while (true) {
     // updateCWD(qc);
     // replace with actual active directory
@@ -138,23 +136,27 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
     // printf("Path file exists at %s\n", path);
     if (strcmp(toRun->execName, "cd") == 0) {
       int res = chdir(toRun->args[1]);
-      if(1 < 0) {
+      if(res < 0) {
         printf("Error on cd.\n");
         exit(-1);
       }
       else {
         // TODO, handle command such as `cd ..`
-        char* slash = (char*)malloc((strlen("/" + 1)*sizeof(char)));
-        strcpy(slash, "/");
+	// i'm guessing we can't use a literal here, slash = "/" for dumb c reasons
+        char* slash = malloc(2);
+	slash[0] = '/';
+	slash[1] = '\0';
+	
+	char *old = qc->cwd;
         qc->cwd = concat(qc->cwd, slash);
+	free(old); // replaced cwd, make sure we free that string
         if (strcmp(toRun->args[1], "..") == 0) {
           // char** cwdSplit = split(qc->cwd, "/", 10);
           // printf("before delete: %s\n", qc->cwd);
           deleteEnd(qc->cwd);
           size_t i = 0;
           // printf("after delete: %s\n", qc->cwd);
-        }
-        else {
+        } else {
           qc->cwd = concat(qc->cwd, toRun->args[1]);
         }
       }
