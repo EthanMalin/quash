@@ -23,6 +23,8 @@ void contextDtor(struct QuashContext* qc);
 // Prints all elements inside env to stdout.
 void printAllEnvVars(struct QuashContext* qc);
 
+void printAllPaths(struct QuashContext* qc);
+
 // Updates the current working directory of the context
 // with the current PWD from envp
 void updateCWD(struct QuashContext* qc);
