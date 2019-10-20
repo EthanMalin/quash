@@ -60,9 +60,35 @@ void updateCWD_(struct QuashContext* qc, char* newPath)
 
 char* getFilePath(struct QuashContext* qc, char* fileName)
 {
-  // printf("Entering getFIlePath!\n");
+  // printf("fileName %s\n", fileName);
   char* fileName_ = malloc(strlen(fileName) + 1);
   strcpy(fileName_, fileName);
+  // printf("Inside getFilePath\n");
+  // Check current path first.
+  char* path_;
+  // printf("fileName_ %s\n", fileName_);
+  size_t len = strlen(qc->cwd);
+  path_ = malloc(strlen(qc->cwd) + 2);
+  strcpy(path_, qc->cwd);
+  // printf("Path_ %s\n", path_);
+  path_[len] = '/';
+  path_[len + 1] = '\0';
+  // printf("Path_ %s\n", path_);
+  fflush(NULL);
+  // printf("fileName_ %s\n", fileName_);
+  char* pathAndFile_ = concat(path_, fileName_);
+  printf("Final pathAndFile_ for cwd: %s\n", pathAndFile_);
+  free(path_);
+  if(access(pathAndFile_, F_OK) != -1 )
+  {
+    // file exists
+    printf("DEBUG: file found in current directory!\n");
+    return(pathAndFile_);
+  }
+  else
+  {
+    printf("DEBUG: file _not_ found in current directory!\n");
+  }
   for(size_t i= 0; qc->paths[i] != NULL; i++)
   {
     // char* slash = (char*)malloc((strlen("/" + 1)*sizeof(char)));
