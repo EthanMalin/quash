@@ -24,8 +24,6 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
 int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
   struct QuashContext *qc = contextCtor(envp);
-  printAllEnvVars(qc);
-  return(0);
   //  test();
   //  return 0;
   // freed per iteration
@@ -33,6 +31,7 @@ int main(int argc, char **argv, char **envp) {
   struct InputBlock *first;
   bool bg; //background
   while (true) {
+    // updateCWD(qc);
     // replace with actual active directory
     printf("[%s]-->", qc->cwd);
     fflush(stdout);
@@ -86,6 +85,7 @@ int main(int argc, char **argv, char **envp) {
     freeInputBlockLinkedList(first);
   }
   
+  contextDtor(qc);
   free(input);
   return 0;
 }
@@ -129,7 +129,21 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
     if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
     if (out[0] != -1) { close(out[0]); } // don't need to read from output
     printInputBlock(toRun);
-    if (execv(toRun->execName, toRun->args) == -1) {
+    if (strcmp(toRun->execName, "/usr/bin/cd") == 0) {
+      int res = chdir(toRun->args[1]);
+      if(res != 0) {
+        printf("Error on cd.\n");
+        exit(-1);
+      }
+      else {
+        // TODO, handle command such as `cd ..`
+        char* slash = (char*)malloc((strlen("/" + 1)*sizeof(char)));
+        strcpy(slash, "/");
+        qc->cwd = concat(qc->cwd, slash);
+        qc->cwd = concat(qc->cwd, toRun->args[1]);
+      }
+    }
+    else if (execv(toRun->execName, toRun->args) == -1) {
       printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
       exit(-1);
     }
@@ -140,9 +154,7 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
   }
 
   // Assume successful command execution
-  if (strcmp(toRun->execName, "cd") == 0) {
-    updateCWD_(qc, toRun->args[1]);
-  }
+
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
   return out[0]; // return potential next process input (only non-negative if we called pipe in this function)
