@@ -20,6 +20,6 @@ struct QuashContext* contextCtor(char** _env);
 void contextDtor(struct QuashContext* qc);
 
 // Updates the current working directory of the context.
-void updateCWD(struct QuashContext* qc);
+void updateCWD(struct QuashContext* qcs);
 
 #endif
