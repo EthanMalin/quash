@@ -11,8 +11,6 @@
 // The callee must free this memory.
 char* activeDirectory(char** env);
 
-// Prints all elements inside env to stdout.
-void printAllEnvVars(char** env);
 
 
 #endif
