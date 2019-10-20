@@ -12,7 +12,7 @@ delete this? we have projects now
   - *jobs* should print all of the currently running background processes in the format [JOBID] PID COMMAND where JOBID is a unique positive integer quash assignes to the job to identify it, PID
 + [] When a command is run in the background, print: [JOBID] PID running in background
 + [] When a background command finishes, quash should print: [JOBID] PID finished COMMAND
-+ [] quash should implement I/O redirection. ('<' - stdout from a file) ('>' - stdout to a file) ex. 'ls > a' sends results of ls to file a (freopen)
++ [] quash should implement I/O redirection. ('<' - stdin from a file) ('>' - stdout to a file) ex. 'ls > a' sends results of ls to file a (freopen)
 + [] quash should implement the pipe command ('|')
 + [] quash should support reading commands interactively (with a prompt) or reading a set of commands stored in a file using '<' ex. bash> quash < commands.txt
 

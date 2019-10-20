@@ -19,10 +19,10 @@ void printInputBlock(struct InputBlock *ib) {
   }
   printf("]\n");
   if (ib->inputFile != NULL) {
-    printf("Input Redirect: %s\n", ib->inputFile);
+    printf("InFile: %s\n", ib->inputFile);
   }
   if (ib->outputFile != NULL) {
-    printf("Output Redirect: %s\n", ib->outputFile);
+    printf("OutFile: %s\n", ib->outputFile);
   }
 }
 
@@ -54,7 +54,7 @@ void freeInputBlockLinkedList(struct InputBlock *first) {
 char* parseInputBlockInputFile(char **block) {
   int i = 0;
   while (block[i] != NULL) {
-    if (strcmp(block[i], ">")==0) {
+    if (strcmp(block[i], "<")==0) {
       if (block[i+1] == NULL) {
         return NULL;
       } else {
@@ -69,7 +69,7 @@ char* parseInputBlockInputFile(char **block) {
 char* parseInputBlockOutputFile(char **block) {
   int i = 0;
   while (block[i] != NULL) {
-    if (strcmp(block[i], "<")==0) {
+    if (strcmp(block[i], ">")==0) {
       if (block[i+1] == NULL) {
         return NULL;
       } else {
@@ -86,8 +86,8 @@ int countInputBlockArgs(char **block) {
   // count the arguments, start at second index (first is executable name)
   int argc = 0;
   while (block[argc+1] != NULL) {
-    //if (strcmp("<", trimEnds(block[argc+1])) == 0) { break; }
-    //if (strcmp(">", trimEnds(block[argc+1])) == 0) { break; } // strcmp should work on substrings? if not take copy and free
+    if (strcmp("<", block[argc+1]) == 0) { break; }
+    if (strcmp(">", block[argc+1]) == 0) { break; } // assuming that these will always be good... no extra spaces or anything
     argc++;
   }
   return argc;
@@ -116,10 +116,9 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
   ib->execName = malloc(strlen(block[0]));
   strcpy(ib->execName, block[0]);
 
-  ib->inputFile = NULL;
-  ib->outputFile = NULL;
-  //ib->inputFile = parseInputBlockInputFile(block);
-  //ib->outputFile = parseInputBlockOutputFile(block);
+  ib->inputFile = parseInputBlockInputFile(block);
+  ib->outputFile = parseInputBlockOutputFile(block);
+
   ib->argc = countInputBlockArgs(block);
   ib->args = malloc(ib->argc * sizeof(char *));
   for(int i = 0; i < ib->argc; i++) {

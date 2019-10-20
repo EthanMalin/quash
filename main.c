@@ -86,7 +86,7 @@ void test() {
 
   char t1[] = "ls -a";
   char t2[] = "cat sample.txt | sort +1 +2";
-  char t3[] = "echo test.txt | cat | sort -2 -1 : somearg | man";
+  char t3[] = "echo test.txt < test2.txt | cat | sort -2 -1 : somearg | man > output.txt";
   char t4[] = "ls";
   char *t[4] = {t1, t2, t3, t4};
 
