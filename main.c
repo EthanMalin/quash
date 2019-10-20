@@ -4,31 +4,50 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h> //O_WRONLY, O_RDONLY
+#include <sys/wait.h>
 
 #include "inputblock.h"
 #include "quashutils.h"
 
 // constants ------------------------------------
 const char *EXIT = "exit";
-const char *QUIT = "quiv";
+const char *QUIT = "quit";
 const int MAX_INPUT_LENGTH = 512; //arbitrary
 const int MAX_INPUT_BLOCK_LENGTH = 256;
 const int MAX_PIPELINE_LENGTH = 32;
 // ----------
 
+struct job {
+  pid_t id;
+  struct job *next;
+};
+
 void test();
-void quash(struct InputBlock *first, bool background);
+void quash(struct InputBlock *first, int background);
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
+void checkJobs(struct job * jobs);
 
 int main(int argc, char **argv) {
   char *input = malloc(MAX_INPUT_LENGTH);
-  //  test();
-  //  return 0;
-  // freed per iteration
   char **inputPipeSplit; // array of strings
   struct InputBlock *first;
-  bool bg; //background
+  struct job *jobs = NULL;
+  int bg; //background
+  pid_t running[MAX_PIPELINE_LENGTH];
+  int lastRunning = -1;
+  
   while (true) {
+
+    // check for completed processes
+    pid_t exited = 0;
+    int status = 0;
+    do {
+      exited = waitpid(0, &status, WNOHANG);
+      if (exited != 0 && exited != -1) {
+	printf("[%d] completed\n", exited);
+      }
+    } while (exited != -1 && exited != 0);
+    
     // replace with actual active directory
     printf("[activeDirectory]-->");
     fflush(stdout);
@@ -48,9 +67,11 @@ int main(int argc, char **argv) {
     for (int i = 0; i < MAX_INPUT_LENGTH; i++) {
       if (input[i] == '&') {
 	input[i] = '\0';
-	bg = true;
+	bg = 1;
+	printf("bg = true\n");
+	break;
       } else {
-	bg = false;
+	bg = 0;
       }
     }
 
@@ -71,14 +92,12 @@ int main(int argc, char **argv) {
     // important
     quash(first, bg);
     
-    // free inputPipeSplit every iteration
+    // cleanup
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
       if (inputPipeSplit[j] == NULL) { break; }
       free(inputPipeSplit[j]);
     }
     free(inputPipeSplit);
-
-    // free InputBlocks every iteration
     freeInputBlockLinkedList(first);
   }
   
@@ -86,7 +105,9 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-void quash(struct InputBlock *first, bool background) {
+    
+
+void quash(struct InputBlock *first, int background) {
   struct InputBlock *current = first;
   pid_t child;
   int out[2], in; // note 'in' NOT an array
@@ -99,11 +120,13 @@ void quash(struct InputBlock *first, bool background) {
     in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
     current = current->next; // iterate
   }
-  if (!background) {
-      wait(&child); // wait for the last forked child, for now always do this
+
+  // handle background or not
+  if (background == 0) {
+    int status = 0;
+    waitpid(child, &status, 0);
   }
 }
-
 
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
   // assume input is set up, set up output
