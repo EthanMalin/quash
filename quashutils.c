@@ -96,22 +96,22 @@ char* concat(char* str1, char* str2) {
       strcpy(str3, str1);
       strcat(str3, str2);
       free(str1);
-      free(str2);
+      // free(str2);
       return str3;
 }
 
 void deleteEnd (char* myStr) {
 
-  printf ("%s\n", myStr);
+  // printf ("%s\n", myStr);
   char *del = &myStr[strlen(myStr)];
   // if(*del == '/') {
   //   del--;
   // }
-  printf("Del %s\n", del);
+  // printf("Del %s\n", del);
   del--;
   del--;
   // while (del > myStr && *del != '/')
-  printf("Del %s\n", del);
+  // printf("Del %s\n", del);
   while (del > myStr && *del != '/')
       // printf("Iterate\n");
       del--;
@@ -119,6 +119,6 @@ void deleteEnd (char* myStr) {
   if (*del== '/')
       *del= '\0';
 
-  printf("%s\n", myStr);
+  // printf("%s\n", myStr);
   return;
 }
