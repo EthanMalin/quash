@@ -99,3 +99,26 @@ char* concat(char* str1, char* str2) {
       free(str2);
       return str3;
 }
+
+void deleteEnd (char* myStr) {
+
+  printf ("%s\n", myStr);
+  char *del = &myStr[strlen(myStr)];
+  // if(*del == '/') {
+  //   del--;
+  // }
+  printf("Del %s\n", del);
+  del--;
+  del--;
+  // while (del > myStr && *del != '/')
+  printf("Del %s\n", del);
+  while (del > myStr && *del != '/')
+      // printf("Iterate\n");
+      del--;
+
+  if (*del== '/')
+      *del= '\0';
+
+  printf("%s\n", myStr);
+  return;
+}

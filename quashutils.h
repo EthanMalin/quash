@@ -10,6 +10,10 @@ char* trimEnds(char *input);
 char* trimEndsCopy(const char *input);
 bool isSpace(char input);
 
+// Concatenates two strings and returns the result.
 char* concat(char* str1, char* str2);
 
+// Removes end of string following the final instance of "/"
+// This is particularly optomized for path operations.
+void deleteEnd (char* myStr);
 #endif
