@@ -10,4 +10,6 @@ char* trimEnds(char *input);
 char* trimEndsCopy(const char *input);
 bool isSpace(char input);
 
+char* concat(char* str1, char* str2);
+
 #endif

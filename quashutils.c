@@ -90,3 +90,12 @@ char* trimEndsCopy(const char *input) {
   res[i] = '\0';
   return res;
 }
+
+char* concat(char* str1, char* str2) {
+      char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
+      strcpy(str3, str1);
+      strcat(str3, str2);
+      free(str1);
+      free(str2);
+      return str3;
+}
