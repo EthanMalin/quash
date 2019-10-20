@@ -8,6 +8,7 @@
 
 #include "inputblock.h"
 #include "quashutils.h"
+#include "quashcontext.h"
 
 // constants ------------------------------------
 const char *EXIT = "exit";
@@ -23,40 +24,38 @@ struct job {
 };
 
 void test();
-void quash(struct InputBlock *first, int background);
-int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
 void checkJobs(struct job * jobs);
+void quash(struct InputBlock *first, bool background, struct QuashContext *qc);
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc); // helper function for quash
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
-  char **inputPipeSplit; // array of strings
+  struct QuashContext *qc = contextCtor(envp);
+  char **inputPipeSplit;
   struct InputBlock *first;
+  bool bg; //background
   struct job *jobs = NULL;
-  int bg; //background
-  pid_t running[MAX_PIPELINE_LENGTH];
-  int lastRunning = -1;
   
   while (true) {
-
     // check for completed processes
     pid_t exited = 0;
     int status = 0;
     do {
       exited = waitpid(0, &status, WNOHANG);
       if (exited != 0 && exited != -1) {
-	printf("[%d] completed\n", exited);
+	      printf("[%d] completed\n", exited);
       }
     } while (exited != -1 && exited != 0);
     
-    // replace with actual active directory
-    printf("[activeDirectory]-->");
+    // prompt
+    printf("[%s]-->", qc->cwd);
     fflush(stdout);
 
     // get & strip input, definitely need more error handling here
     fgets(input, MAX_INPUT_LENGTH, stdin);
     strtok(input, "\n");  // gets rid of trailing (first!) newline from fgets input
 
-    // handle command -- eventually needs to be a branch?
+    // handle exit command
     if (strcmp(EXIT, input) == 0 || strcmp(QUIT, input) == 0) {
       printf("Goodbye.\n");
       break; // haven't allocated anything this iteration, safe to exit
@@ -66,12 +65,12 @@ int main(int argc, char **argv) {
     // look for and remove '&'
     for (int i = 0; i < MAX_INPUT_LENGTH; i++) {
       if (input[i] == '&') {
-	input[i] = '\0';
-	bg = 1;
-	printf("bg = true\n");
-	break;
+	      input[i] = '\0';
+	      bg = 1;
+        printf("bg = true\n");
+        break;
       } else {
-	bg = 0;
+	      bg = 0;
       }
     }
 
@@ -90,7 +89,7 @@ int main(int argc, char **argv) {
     }
 
     // important
-    quash(first, bg);
+    quash(first, bg, qc);
     
     // cleanup
     for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
@@ -101,23 +100,45 @@ int main(int argc, char **argv) {
     freeInputBlockLinkedList(first);
   }
   
+  contextDtor(qc);
   free(input);
   return 0;
 }
 
-    
-
-void quash(struct InputBlock *first, int background) {
+void quash(struct InputBlock *first, bool background, struct QuashContext *qc) {
   struct InputBlock *current = first;
   pid_t child;
   int out[2], in; // note 'in' NOT an array
 
-  // set up input for first ib
-  in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
+  // if the user wants to cd..
+  if (strcmp(first->execName, "cd") == 0) {
+    int res = chdir(first->args[1]);
+    if(res < 0) {
+      printf("Error on cd.\n");
+      exit(-1);
+    } else {
+      char* slash = malloc(2);
+      slash[0] = '/';
+      slash[1] = '\0';
+	
+      char *old = qc->cwd;
+      qc->cwd = concat(qc->cwd, slash);
+      free(old);
+
+      if (strcmp(first->args[1], "..") == 0) {
+	deleteEnd(qc->cwd);
+	size_t i = 0;
+      } else {
+	qc->cwd = concat(qc->cwd, first->args[1]);
+      }
+    }
+  } else {
+    // set up input for first ib
+    in = current->inputFile != NULL ? open(current->inputFile, O_RDONLY) : -1;
 
   // main execution loop
   while (current != NULL) {
-    in = run(current, in, out, &child); // this function closes in and returns the next in, also populates child
+    in = run(current, in, out, &child, qc); // this function closes in and returns the next in, also populates child
     current = current->next; // iterate
   }
 
@@ -128,7 +149,7 @@ void quash(struct InputBlock *first, int background) {
   }
 }
 
-int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
+int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc) {
   // assume input is set up, set up output
   if (toRun->next != NULL) { // if there is to be a "next process", it takes precedence over output redirect
     pipe(out);
@@ -144,11 +165,20 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
   *child = fork();  
   if (*child == 0) {
     // CHILD CODE HERE ----------------------------------------------------------------------
+    // set up input/output redirect
     if (in != -1) { dup2(in, STDIN_FILENO); }
     if (out[1] != -1) { dup2(out[1], STDOUT_FILENO); }    
     if (out[0] != -1) { close(out[0]); } // don't need to read from output
 
-    if (execv(toRun->execName, toRun->args) == -1) {
+    // get full path for executable
+    char* path = getFilePath(qc, toRun->execName);
+    if(path == NULL) { //does not exist!!!
+      printf("ERROR: Executable \"%s\" does not exist in any valid paths\n", toRun->execName);
+      exit(-1);
+    }
+
+    // execute!
+    if (execv(path, toRun->args) == -1) {
       printf("exec failed. aborting child (block name \"%s\")\n", toRun->execName);
       exit(-1);
     }
@@ -157,6 +187,8 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child) {
     printf("error on fork: %d\n", *child);
     return -1;
   }
+
+  // Assume successful command execution
 
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
