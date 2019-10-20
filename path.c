@@ -26,7 +26,7 @@ char* activeDirectory(char** env)
         j++;
       }
       free(dir);
-      printf("Returning %s\n", ad);
+      // printf("Returning %s\n", ad);
       return ad;
     }
     
