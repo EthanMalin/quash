@@ -19,7 +19,11 @@ struct QuashContext* contextCtor(char** _env);
 // is responsible for, then deallocates it as well.
 void contextDtor(struct QuashContext* qc);
 
-// Updates the current working directory of the context.
+// Updates the current working directory of the context
+// with the current PWD from envp
 void updateCWD(struct QuashContext* qc);
 
+// Updates the current working directory of the context
+// to the path passed in.
+void updateCWD_(struct QuashContext* qc, char* newPath);
 #endif

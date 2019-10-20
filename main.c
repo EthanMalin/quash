@@ -7,6 +7,7 @@
 
 #include "inputblock.h"
 #include "quashutils.h"
+#include "quashcontext.h"
 
 // constants ------------------------------------
 const char *EXIT = "exit";
@@ -20,8 +21,9 @@ void test();
 void quash(struct InputBlock *first, bool background);
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child); // helper function for quash
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
+  struct QuashContext *qc = contextCtor(envp);
   //  test();
   //  return 0;
   // freed per iteration
@@ -30,7 +32,7 @@ int main(int argc, char **argv) {
   bool bg; //background
   while (true) {
     // replace with actual active directory
-    printf("[activeDirectory]-->");
+    printf("[%s]-->", qc->cwd);
     fflush(stdout);
 
     // get & strip input, definitely need more error handling here

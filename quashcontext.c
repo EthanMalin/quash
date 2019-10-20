@@ -20,3 +20,10 @@ void updateCWD(struct QuashContext* qc)
   printf("Attempting to update CWD\n");
   qc->cwd = activeDirectory(qc->env);
 }
+
+void updateCWD_(struct QuashContext* qc, char* newPath)
+{
+  free(qc->cwd);
+  printf("Attempting to update CWD\n");
+  qc->cwd = newPath;
+}
