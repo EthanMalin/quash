@@ -26,6 +26,9 @@ struct InputBlock {
 
 After parsing into an InputBlock list, we loop through the list, forking a child for each one and hooking up the pipes accordingly, see the `quash` and `run` methods in main.c
 
+The code is well documented with inline comments explaining our implementation, writing that here would be redundant.
+
+
 The program currently supports the following
 - [x] Running single commands as child process
 - [x] Giving arguments to child process
@@ -39,3 +42,5 @@ The program currently supports the following
 The program currently *does not* support the following
 - [ ] The keyword `jobs` prints all running background processes
 - [ ] Child processes inherit environment variables
+
+We got close with the jobs, but did not have enough time to finish, so our solution does not meet all the requirements. See main.c for half implementation (`addJob` and `checkJobs`)

@@ -14,6 +14,7 @@
 // constants ------------------------------------
 const char *EXIT = "exit";
 const char *QUIT = "quit";
+const char *JOBS = "jobs";
 const int MAX_INPUT_LENGTH = 512; //arbitrary
 const int MAX_INPUT_BLOCK_LENGTH = 256;
 const int MAX_PIPELINE_LENGTH = 32;
@@ -27,10 +28,14 @@ struct job {
   struct job *next;
 };
 
+
 void test();
 void checkJobs(struct job * jobs);
 void quash(struct InputBlock *first, bool background, struct QuashContext *qc);
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc); // helper function for quash
+void addJob(struct InputBlock *ran, pid_t id, struct job *jobs);
+void checkJobs(struct job *jobs);
+
 
 int main(int argc, char **argv, char **envp) {
   char *input = malloc(MAX_INPUT_LENGTH);
@@ -64,6 +69,9 @@ int main(int argc, char **argv, char **envp) {
       printf("Goodbye.\n");
       break; // haven't allocated anything this iteration, safe to exit
       // MIGHT NOT BE TRUE, does fgets allocate input?
+    } else if (strcmp(JOBS, input) == 0) {
+      printf("'jobs' command not currently supported.\n");
+      continue;
     }
 
     // look for and remove '&'
@@ -212,44 +220,49 @@ int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct Quash
   if (out[1] != -1) { close(out[1]); } // no longer need write end of output in parent
   if (in != -1) { close(in); }
   return out[0]; // return potential next process input (only non-negative if we called pipe in this function)
+
 }  
 
-      // TESTING FUNCTION
-void test() {
-  
-  // freed per iteration
-  char **inputPipeSplit; // array of strings
-  struct InputBlock *first;
-
-  char t1[] = "ls -a";
-  char t2[] = "cat sample.txt | sort +1 +2";
-  char t3[] = "echo test.txt < test2.txt | cat | sort -2 -1 : somearg | man > output.txt";
-  char t4[] = "ls";
-  char *t[4] = {t1, t2, t3, t4};
-
-  // testing split on pipes                                                                                                                                                                         
-  for(int i = 0; i < 4; i++) {
-    printf("\n\n#######################################\n");
-    printf("creating linked list from: \"%s\"\n", t[i]);
-    inputPipeSplit = split(t[i], "|", MAX_PIPELINE_LENGTH);
+void checkJobs(struct job *jobs) {
+  struct job *temp;
+  struct job *prev;
+  if (jobs == NULL) {
+    return;
+  }
+  temp = jobs;
+  prev = NULL;
+  while (temp != NULL) {
+    // check for completed processes
+    pid_t exited = 0;
+    int status = 0;
+    exited = waitpid(temp->id, &status, WNOHANG);
+    if (exited != 0 && exited != -1) {
+      printf("[%d] %d finished %s\n", temp->qid, temp->id, temp->command);
+    }
+  }
+}
     
-    first = createInputBlockLinkedList(inputPipeSplit, MAX_PIPELINE_LENGTH, MAX_INPUT_BLOCK_LENGTH);
-    if (first == NULL) {
-      printf("ERROR: could not create linked list from strings.\n");
-      break;
+void addJob(struct InputBlock *ran, pid_t id, struct job *jobs) {
+  struct job *temp;
+  if (jobs == NULL) {
+    jobs = malloc(sizeof(struct job));
+    jobs->id = id;
+    jobs->qid = QUASH_GLOBAL_ID_POOL;
+    QUASH_GLOBAL_ID_POOL++;
+    jobs->command = malloc(strlen(ran->command) + 1);
+    strcpy(jobs->command, ran->command);
+    jobs->next = NULL;
+  } else {
+    temp = jobs;
+    while (temp->next != NULL) {
+      temp = temp->next;
     }
-
-    while (first != NULL) {
-      printInputBlock(first);
-      first = first->next;
-    }
-
-    for (int j = 0; j < MAX_PIPELINE_LENGTH; j++) {
-      if (inputPipeSplit[j] == NULL) { break; }
-      free(inputPipeSplit[j]);
-    }
-    free(inputPipeSplit);
-
-    freeInputBlockLinkedList(first);
+    temp->next = malloc(sizeof(struct job));
+    temp->next->id = id;
+    temp->next->qid = QUASH_GLOBAL_ID_POOL;
+    QUASH_GLOBAL_ID_POOL++;
+    temp->next->command = malloc(strlen(ran->command) + 1);
+    strcpy(temp->next->command, ran->command);
+    temp->next->next = NULL;
   }
 }
