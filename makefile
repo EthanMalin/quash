@@ -11,4 +11,4 @@ quash: $(OBJ)
 	$(CC) -o $@ $^
 
 clean:
-	rm main *.o *~
+	rm quash *.o *~

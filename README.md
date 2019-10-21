@@ -27,15 +27,15 @@ struct InputBlock {
 After parsing into an InputBlock list, we loop through the list, forking a child for each one and hooking up the pipes accordingly, see the `quash` and `run` methods in main.c
 
 The program currently supports the following
-[x] Running single commands as child process
-[x] Giving arguments to child process
-[x] Redirecting child process 'input from'/'output to' a file
-[x] Linking multiple child processes together using pipes and input/output redirection
-[x] Background/Foreground execution using the special character '&'
-[x] Quash searches CWD and PATH variables for executables not specified with an absolute path
-[x] Quash supports the build in functions `set`, `cd *dir*`, `quit`, and `exit`.
-[x] Finished background processes print when done
++[x] Running single commands as child process
++[x] Giving arguments to child process
++[x] Redirecting child process 'input from'/'output to' a file
++[x] Linking multiple child processes together using pipes and input/output redirection
++[x] Background/Foreground execution using the special character '&'
++[x] Quash searches CWD and PATH variables for executables not specified with an absolute path
++[x] Quash supports the build in functions `set`, `cd *dir*`, `quit`, and `exit`.
++[x] Finished background processes print when done
 
 The program currently *does not* support the following
-[] The keyword `jobs` prints all running background processes
-[] Child processes inherit environment variables
++[] The keyword `jobs` prints all running background processes
++[] Child processes inherit environment variables
