@@ -1,53 +1,41 @@
 # quash
 bash like shell to practice syscalls for EECS 678 Operating Systems at KU - In collaboration with Ron Huff
 
-delete this? we have projects now
-+ [x] quash should be able to run executables with command line parameters. (fork and exec)
-+ [] If the executable is not specified as absolute path ('/'), quash should search in directories in the PATH environment variable, print error message if no executable found
-+ [] quash should allow foreground and background ('&') executions. (wait, waitpid, SIGCHLD)
-+ [] quash should support the following built-in functions:
-  - [] *set* to set the value of an environment variable. Initial environment variables should be inherited from the command line the invokes quash. At least PATH and HOME must be supported on initialization. Child processes should inherit environment variables.
-  - [] *cd **dir*** to change the current working directory to **dir**. *cd* with no arguments should change to the HOME directory. (chdir)
-  - [] *quit* and *exit* to exit quash.
-  - *jobs* should print all of the currently running background processes in the format [JOBID] PID COMMAND where JOBID is a unique positive integer quash assignes to the job to identify it, PID
-+ [] When a command is run in the background, print: [JOBID] PID running in background
-+ [] When a background command finishes, quash should print: [JOBID] PID finished COMMAND
-+ [] quash should implement I/O redirection. ('<' - stdin from a file) ('>' - stdout to a file) ex. 'ls > a' sends results of ls to file a (freopen)
-+ [x] quash should implement the pipe command ('|')
-+ [] quash should support reading commands interactively (with a prompt) or reading a set of commands stored in a file using '<' ex. bash> quash < commands.txt
+The program is written in C.
 
-## ABOUT THE IMPLEMENTATION
-So far we only have one piece of the puzzle mostly implemented.
+BUILD
+`make` in quash directory
 
-###Input Blocks
-An input block is defined as
-```
+RUN
+`./quash` after building
+
+Before executing the command, we have to parse it into a usable state. We achieve this using some custom c-string manipulation functions and parsing a command into a list of InputBlock structs where
+
 struct InputBlock {
-  struct InputBlock *prev;
-  struct InputBlock *next;
+       struct InputBlock *prev;
+       struct InputBlock *next;
 
-  char *execName;
-  char *inputFile; 
-  char *outputFile;
-  int argc;
-  char **args;
+       char *command;
+       char *execName;
+
+       char *inFile;
+       char *outFile;
+
+       char **args;
 };
-```
-The fields concerning the input are the inputFile, outputFile, execName, and args (along with argc).
-It should also be obvious that InputBlocks have the ability to link together through their next and prev pointers. This is helpful when creating pipelines of executables.
-We parse the user input to quash into InputBlocks to have a friendlier data structure to work with, rather than executing off of the raw strings themselves.
 
-Ideal main
-```
-int main(...) {
-    bool quit = false;
-    while(!quit) {
-        char **input;
-	struct InputBlock *first;
-	input = getInput();
-	first = makeInputBlockLinkedList(input);
-	quit = quash(first);
-    }
-}
-```
+After parsing into an InputBlock list, we loop through the list, forking a child for each one and hooking up the pipes accordingly, see the `quash` and `run` methods in main.c
 
+The program currently supports the following
+[x] Running single commands as child process
+[x] Giving arguments to child process
+[x] Redirecting child process output to a file
+[x] Linking multiple child processes together using pipes and input/output redirection
+[x] Background/Foreground execution using the special character '&'
+[x] Quash searches CWD and PATH variables for executables not specified with an absolute path
+[x] Quash supports the build in functions `set`, `cd *dir*`, `quit`, and `exit`.
+[x] Finished background processes print when done
+
+The program currently *does not* support the following
+[] The keyword `jobs` prints all running background processes
+[] Child processes inherit environment variables
