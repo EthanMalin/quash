@@ -29,7 +29,7 @@ After parsing into an InputBlock list, we loop through the list, forking a child
 The program currently supports the following
 [x] Running single commands as child process
 [x] Giving arguments to child process
-[x] Redirecting child process output to a file
+[x] Redirecting child process 'input from'/'output to' a file
 [x] Linking multiple child processes together using pipes and input/output redirection
 [x] Background/Foreground execution using the special character '&'
 [x] Quash searches CWD and PATH variables for executables not specified with an absolute path
