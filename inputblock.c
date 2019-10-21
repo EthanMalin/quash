@@ -9,6 +9,7 @@
  * for debug purposes
  */
 void printInputBlock(struct InputBlock *ib) {
+  printf("Command: %s\n", ib->command);
   printf("Name: %s\n", ib->execName);
   printf("Args: [");
   for (int i = 0; i < ib->argc; i++) {
@@ -30,6 +31,7 @@ void freeInputBlock(struct InputBlock *ib) {
   // assumes execName, args, ib, all populated
   ib->next = NULL;
   ib->prev = NULL;
+  free(ib->command);
   free(ib->execName);
   if (ib->inputFile != NULL) { free(ib->inputFile); }
   if (ib->outputFile != NULL) { free(ib->outputFile); }
@@ -78,8 +80,8 @@ char* parseInputBlockOutputFile(char **block) {
   }
   return NULL;
 }
-/* countInputBlockArgs
- */
+
+
 int countInputBlockArgs(char **block) {
   // count the arguments, start at second index (first is executable name)
   int argc = 0;
@@ -98,7 +100,6 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
   // parse block
   char *trimmedBlock = trimEndsCopy(rawBlock);
   char **block = split(trimmedBlock, " ", maxInputBlockLength); // makes copy of block, splits into fields e.g. ["ls", "-a", "-t", ... ]
-  free(trimmedBlock);
   if (block == NULL) { // this would happen if the block was too long/had too many spaces
     printf("ERROR: command string \"%s\" too long\n", rawBlock);
     return NULL;
@@ -109,8 +110,7 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
   ib->prev = NULL;
   ib->next = NULL;
 
-  // copy execName
-  // should any of the following be in some sort of error handling scheme? probably.
+  ib->command = trimmedBlock;
   ib->execName = malloc(strlen(block[0]));
   strcpy(ib->execName, block[0]);
 
@@ -131,7 +131,7 @@ struct InputBlock* inputBlockFromString(char *rawBlock, int maxInputBlockLength)
    * ib now owns *copies* of the string data passed in the rawBlock parameter, and copied into the block array in the split call
    * so we can safely free the block data, and free the rawBlock data in main after this point.
    */
-  // split pads block with NULL
+  // probably should not be done here
   for (int i = 0; i < maxInputBlockLength; i++) {
     if (block[i] == NULL) { break; }
     free(block[i]);
