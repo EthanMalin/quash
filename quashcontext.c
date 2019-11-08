@@ -4,13 +4,22 @@ struct QuashContext* contextCtor(char** _env)
 {
   struct QuashContext* returnContextPtr = malloc(sizeof(struct QuashContext));
   returnContextPtr->env = _env;
+  printf("calling activeDirectory\n");
   returnContextPtr->cwd = activeDirectory(_env);
+  printf("got activeDirectory\n");
   size_t i = 0;
   while (returnContextPtr->env[i] != NULL)
   {
+    printf("splitting %s\n", returnContextPtr->env[i]);
     char** temp = split(returnContextPtr->env[i], "=", 3);
+    if (temp == NULL) {
+      i++;
+      continue;
+    }
+    printf("split\n");
     if (strcmp(temp[0], "PATH") == 0)
     {
+      printf("detected PATH\n");
       memmove(returnContextPtr->env[i], returnContextPtr->env[i]+5, strlen(returnContextPtr->env[i]));
       returnContextPtr->paths = split(returnContextPtr->env[i], ":", 20);
       break;

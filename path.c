@@ -10,36 +10,33 @@ const char* PWD_FLAG = "PWD"; // This is confirmed for MacOS
 char* activeDirectory(char** env)
 {
   size_t i = 0;
-  while (env[i] != NULL)
+  char *r = NULL;
+  while (env[i] != NULL && r == NULL)
   {
+    printf("splitting on %s\n", env[i]);
     char** dir = split(env[i], "=", 3);
     if (strcmp(dir[0],PWD_FLAG) == 0)
     {
       char* ad = malloc(strlen(dir[1]) + 1);
       strncpy(ad, dir[1], strlen(dir[1]));
       ad[strlen(dir[1])] = '\0';
-
-      size_t j = 0;
-      while(dir[j] != NULL)
-      {
-        free(dir[j]);
-        j++;
-      }
-      free(dir);
-      // printf("Returning %s\n", ad);
-      return ad;
+      r = ad;
     }
-    
+
+    printf("cleaning up\n");
     size_t j = 0;
     while(dir[j] != NULL)
     {
+      printf("free[]\n");
       free(dir[j]);
       j++;
     }
-    free(dir);
+    printf("free \n");
+    //    free(dir);
 
     i++;
   }
-  return (NULL);
+  printf("returning\n");
+  return r;
 }
 

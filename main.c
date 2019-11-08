@@ -33,13 +33,16 @@ void quash(struct InputBlock *first, bool background, struct QuashContext *qc);
 int run(struct InputBlock *toRun, int in, int out[2], pid_t *child, struct QuashContext *qc); // helper function for quash
 
 int main(int argc, char **argv, char **envp) {
+  printf("first\n");
   char *input = malloc(MAX_INPUT_LENGTH);
+  printf("second\n");
   struct QuashContext *qc = contextCtor(envp);
+  printf("third\n");
   char **inputPipeSplit;
   struct InputBlock *first;
   bool bg; //background
   struct job *jobs = NULL;
-  
+  printf("fourth\n");
   while (true) {
     // check for completed processes
     pid_t exited = 0;
@@ -50,7 +53,8 @@ int main(int argc, char **argv, char **envp) {
 	printf("[%d] completed\n", exited);
       }
     } while (exited != -1 && exited != 0);
-    
+
+    printf("checked for completed jobs\n");
     // prompt
     printf("[%s]-->", qc->cwd);
     fflush(stdout);
@@ -59,6 +63,7 @@ int main(int argc, char **argv, char **envp) {
     fgets(input, MAX_INPUT_LENGTH, stdin);
     strtok(input, "\n");  // gets rid of trailing (first!) newline from fgets input
 
+    printf("got input\n");
     // handle exit command
     if (strcmp(EXIT, input) == 0 || strcmp(QUIT, input) == 0) {
       printf("Goodbye.\n");
